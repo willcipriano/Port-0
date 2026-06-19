@@ -56,8 +56,22 @@ export const subnetFileSchema = z.object({
   landmark_count: z.number().int().min(1),
 });
 
+export const landmarkSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  ipv6: z.string().regex(/^2001:db8:[0-9a-f]+:[0-9a-f]+::[0-9a-f]+$/i),
+  role: z.string().min(1),
+  os_archetype_id: z.enum(['cheap_server', 'generic_linux', 'corp_workstation', 'mainframe']),
+});
+
+export const landmarksFileSchema = z.object({
+  balance_version: z.literal('balance-v0'),
+  landmarks: z.array(landmarkSchema).min(1),
+});
+
 export const balanceFileSchema = z.record(z.unknown());
 
 export type ToolFileEntry = z.infer<typeof toolSchema>;
 export type ArchetypeFileEntry = z.infer<typeof archetypeSchema>;
 export type SubnetFileEntry = z.infer<typeof subnetFileSchema>;
+export type LandmarkFileEntry = z.infer<typeof landmarkSchema>;

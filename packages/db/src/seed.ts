@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getPool } from './pool.js';
+import { bootstrapWorld } from './worldBootstrap.js';
 
 function contentRoot(): string {
   if (process.env.CONTENT_DIR) return resolve(process.env.CONTENT_DIR);
@@ -62,6 +63,11 @@ export async function seedDatabase(): Promise<void> {
       }),
     ],
   );
+
+  const bootstrap = await bootstrapWorld();
+  if (!bootstrap.skipped) {
+    console.log(`Bootstrapped ${bootstrap.created} machines for subnet ${bootstrap.subnetId}.`);
+  }
 }
 
 export async function seedTestAuditEvent(accountId: string): Promise<void> {

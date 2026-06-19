@@ -9,6 +9,7 @@ export {
 } from './redis.js';
 export { runMigrations } from './migrate.js';
 export { seedDatabase, seedTestAuditEvent } from './seed.js';
+export { bootstrapWorld, countMachines, type BootstrapWorldOptions, type BootstrapWorldResult } from './worldBootstrap.js';
 export {
   findAccountByOAuth,
   findAccountById,

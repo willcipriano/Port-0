@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import {
   archetypesFileSchema,
+  landmarksFileSchema,
   subnetFileSchema,
   toolsFileSchema,
   balanceFileSchema,
@@ -69,6 +70,16 @@ export function validateContent(root = contentRoot()): { ok: boolean; errors: st
   } else {
     const subnetResult = subnetFileSchema.safeParse(loadJsonOrYaml(subnetPath));
     if (!subnetResult.success) errors.push(`subnet/mvp-subnet.json: ${subnetResult.error.message}`);
+  }
+
+  const landmarksPath = join(root, 'landmarks', 'mvp-landmarks.json');
+  if (!existsSync(landmarksPath)) {
+    errors.push(`Missing ${landmarksPath}`);
+  } else {
+    const landmarksResult = landmarksFileSchema.safeParse(loadJsonOrYaml(landmarksPath));
+    if (!landmarksResult.success) {
+      errors.push(`landmarks/mvp-landmarks.json: ${landmarksResult.error.message}`);
+    }
   }
 
   errors.push(...validateBalanceDir(root));

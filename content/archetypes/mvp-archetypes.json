@@ -1,0 +1,57 @@
+{
+  "balance_version": "balance-v0",
+  "archetypes": [
+    {
+      "id": "cheap_server",
+      "name": "CheapServer OS",
+      "tier": 1,
+      "shell_character": "Minimal commands, known backdoors, tutorial-adjacent",
+      "default_security": {
+        "password": 1,
+        "firewall": 1,
+        "alarm": 1,
+        "encryption": 0,
+        "antivirus": 0
+      }
+    },
+    {
+      "id": "generic_linux",
+      "name": "Generic Linux",
+      "tier": 2,
+      "shell_character": "Standard shell, configurable services",
+      "default_security": {
+        "password": 2,
+        "firewall": 2,
+        "alarm": 2,
+        "encryption": 1,
+        "antivirus": 1
+      }
+    },
+    {
+      "id": "corp_workstation",
+      "name": "Corp Workstation",
+      "tier": 3,
+      "shell_character": "Hardened defaults, audit logs, corp security",
+      "default_security": {
+        "password": 3,
+        "firewall": 3,
+        "alarm": 3,
+        "encryption": 2,
+        "antivirus": 2
+      }
+    },
+    {
+      "id": "mainframe",
+      "name": "Mainframe",
+      "tier": 4,
+      "shell_character": "Restricted command set, high component levels",
+      "default_security": {
+        "password": 4,
+        "firewall": 4,
+        "alarm": 4,
+        "encryption": 3,
+        "antivirus": 3
+      }
+    }
+  ]
+}

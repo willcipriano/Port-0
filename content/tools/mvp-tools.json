@@ -1,0 +1,77 @@
+{
+  "balance_version": "balance-v0",
+  "tools": [
+    {
+      "id": "scanner_l1",
+      "name": "Subnet Scanner L1",
+      "category": "scanner",
+      "max_security_level": 1,
+      "ram_cost": 1,
+      "cpu_cost": 1,
+      "duration_seconds": 1,
+      "target_type": "subnet",
+      "market_price": 50,
+      "description": "Queue subnet scan; results arrive on next tick."
+    },
+    {
+      "id": "cracker_l1",
+      "name": "Password Cracker L1",
+      "category": "cracker",
+      "max_security_level": 1,
+      "ram_cost": 2,
+      "cpu_cost": 2,
+      "duration_seconds": 30,
+      "target_type": "password",
+      "market_price": 75,
+      "description": "Defeat Password L1 protection during hack session."
+    },
+    {
+      "id": "trace_blocker_l1",
+      "name": "Trace Blocker L1",
+      "category": "trace_blocker",
+      "max_security_level": 1,
+      "ram_cost": 1,
+      "cpu_cost": 1,
+      "duration_seconds": 10,
+      "target_type": "service",
+      "market_price": 100,
+      "description": "Extends trace deadline while running."
+    },
+    {
+      "id": "port_opener_l1",
+      "name": "Port Opener L1",
+      "category": "port_opener",
+      "max_security_level": 1,
+      "ram_cost": 2,
+      "cpu_cost": 1,
+      "duration_seconds": 20,
+      "target_type": "firewall",
+      "market_price": 80,
+      "description": "Bypass Firewall L1 restrictions."
+    },
+    {
+      "id": "recon_l1",
+      "name": "Recon Probe L1",
+      "category": "recon",
+      "max_security_level": 1,
+      "ram_cost": 1,
+      "cpu_cost": 1,
+      "duration_seconds": 15,
+      "target_type": "ownership",
+      "market_price": 120,
+      "description": "Chance to reveal hidden ownership fingerprint."
+    },
+    {
+      "id": "log_cleaner_l1",
+      "name": "Log Cleaner L1",
+      "category": "log_cleaner",
+      "max_security_level": 1,
+      "ram_cost": 1,
+      "cpu_cost": 1,
+      "duration_seconds": 10,
+      "target_type": "logs",
+      "market_price": 90,
+      "description": "Remove evidence from target logs post-access."
+    }
+  ]
+}

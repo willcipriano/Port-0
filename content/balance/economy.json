@@ -1,0 +1,15 @@
+{
+  "balance_version": "balance-v0",
+  "tick_minutes": 15,
+  "starter_crypto": 500,
+  "upkeep_per_drone_per_tick": 5,
+  "passive_income_per_drone_per_tick": 10,
+  "l1_tool_prices": {
+    "scanner_l1": 50,
+    "cracker_l1": 75,
+    "trace_blocker_l1": 100,
+    "port_opener_l1": 80,
+    "recon_l1": 120,
+    "log_cleaner_l1": 90
+  }
+}

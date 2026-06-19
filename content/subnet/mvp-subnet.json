@@ -1,0 +1,10 @@
+{
+  "balance_version": "balance-v0",
+  "zone_id": "shady_hollow",
+  "zone_name": "Shady Hollow",
+  "subnet_id": "block_7",
+  "ipv6_prefix": "2001:db8:1:7::/64",
+  "theme": "residential_mixed_shady",
+  "machine_count": 300,
+  "landmark_count": 3
+}

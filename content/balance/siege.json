@@ -1,0 +1,5 @@
+{
+  "balance_version": "balance-v0",
+  "resolve_ticks": 2,
+  "interactive_window_minutes": 5
+}

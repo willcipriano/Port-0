@@ -1,0 +1,6 @@
+{
+  "balance_version": "balance-v0",
+  "heat_per_caught_hack": 5,
+  "decay_per_tick": 1,
+  "floor_baseline": 0
+}

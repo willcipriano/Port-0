@@ -1,0 +1,22 @@
+{
+  "name": "port0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev:auth": "npm run dev -w @port0/auth",
+    "dev:game-api": "npm run dev -w @port0/game-api",
+    "dev:tick-worker": "npm run dev -w @port0/tick-worker",
+    "dev:client": "npm run dev -w @port0/client",
+    "dev:mock": "npm run dev:mock -w @port0/shared",
+    "validate-content": "npm run validate-content -w @port0/shared"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

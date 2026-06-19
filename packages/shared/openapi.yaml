@@ -1,0 +1,508 @@
+openapi: 3.1.0
+info:
+  title: Port 0 Game API
+  version: 0.1.0
+  description: MVP API contract for auth, world, scans, fleet, market, and real-time sessions.
+
+servers:
+  - url: http://localhost:3001
+    description: Auth service
+  - url: http://localhost:3002
+    description: Game API
+  - url: http://localhost:3099
+    description: Mock server (development)
+
+tags:
+  - name: Auth
+  - name: World
+  - name: Scan
+  - name: Fleet
+  - name: Market
+  - name: Siege
+  - name: Realtime
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/callback:
+    post:
+      tags: [Auth]
+      summary: OAuth authorization code exchange
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, code, redirectUri]
+              properties:
+                provider:
+                  type: string
+                  enum: [github, google]
+                code:
+                  type: string
+                redirectUri:
+                  type: string
+      responses:
+        '200':
+          description: Tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current account profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+
+  /world/subnet:
+    get:
+      tags: [World]
+      summary: MVP subnet metadata and heat
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subnet info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldSubnetResponse'
+
+  /machines/{ipv6}:
+    get:
+      tags: [World]
+      summary: Public machine fingerprint (no ownership)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ipv6
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '2001:db8:1:7::a1'
+      responses:
+        '200':
+          description: Fingerprint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineFingerprint'
+
+  /scans:
+    post:
+      tags: [Scan]
+      summary: Queue subnet scan (delivers on next tick)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subnetId]
+              properties:
+                subnetId:
+                  type: string
+      responses:
+        '201':
+          description: Scan queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanRequest'
+
+  /scans/{id}:
+    get:
+      tags: [Scan]
+      summary: Scan status and results
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanRequest'
+
+  /fleet:
+    get:
+      tags: [Fleet]
+      summary: Player-owned machines
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fleet list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  machines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Machine'
+
+  /machines/{ipv6}/harden:
+    post:
+      tags: [Fleet]
+      summary: Apply hardening configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ipv6
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                passwordLevel:
+                  type: integer
+                firewallLevel:
+                  type: integer
+                alarmLevel:
+                  type: integer
+      responses:
+        '200':
+          description: Updated machine
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+
+  /market:
+    get:
+      tags: [Market]
+      summary: NPC market catalog
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        toolId:
+                          type: string
+                        price:
+                          type: integer
+
+  /market/purchase:
+    post:
+      tags: [Market]
+      summary: Purchase tool from NPC market
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toolId]
+              properties:
+                toolId:
+                  type: string
+      responses:
+        '200':
+          description: Purchase OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  toolId:
+                    type: string
+                  newBalance:
+                    type: integer
+
+  /sieges:
+    get:
+      tags: [Siege]
+      summary: List sieges involving player
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Siege list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sieges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Siege'
+    post:
+      tags: [Siege]
+      summary: Declare siege on target machine
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetIpv6]
+              properties:
+                targetIpv6:
+                  type: string
+      responses:
+        '201':
+          description: Siege declared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Siege'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+
+    AuthTokens:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    RigStats:
+      type: object
+      required: [cpu, ram, storage, bandwidth]
+      properties:
+        cpu:
+          type: integer
+        ram:
+          type: integer
+        storage:
+          type: integer
+        bandwidth:
+          type: integer
+
+    Account:
+      type: object
+      required: [id, cryptoBalance, rigStats, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayHandle:
+          type: string
+        cryptoBalance:
+          type: integer
+        rigStats:
+          $ref: '#/components/schemas/RigStats'
+        status:
+          type: string
+          enum: [active, hospital, prison]
+
+    MachineFingerprint:
+      type: object
+      required: [ipv6, osArchetypeId, securitySummary, isLandmark]
+      properties:
+        ipv6:
+          type: string
+        osArchetypeId:
+          type: string
+          enum: [cheap_server, generic_linux, corp_workstation, mainframe]
+        securitySummary:
+          type: string
+        isLandmark:
+          type: boolean
+
+    Machine:
+      type: object
+      required: [ipv6, osArchetypeId, isLandmark]
+      properties:
+        ipv6:
+          type: string
+        osArchetypeId:
+          type: string
+        isLandmark:
+          type: boolean
+        ownerAccountId:
+          type: string
+          format: uuid
+
+    ScanRequest:
+      type: object
+      required: [id, status, queuedAt]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, complete]
+        results:
+          type: array
+          items:
+            type: string
+        queuedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    WorldSubnetResponse:
+      type: object
+      required: [subnet, heatLevel]
+      properties:
+        subnet:
+          type: object
+          required: [zoneId, zoneName, subnetId, prefix, machineCount, landmarkCount, theme]
+          properties:
+            zoneId:
+              type: string
+            zoneName:
+              type: string
+            subnetId:
+              type: string
+            prefix:
+              type: string
+            machineCount:
+              type: integer
+            landmarkCount:
+              type: integer
+            theme:
+              type: string
+        heatLevel:
+          type: integer
+
+    Siege:
+      type: object
+      required: [id, targetIpv6, attackerAccountId, status, declaredAt]
+      properties:
+        id:
+          type: string
+        targetIpv6:
+          type: string
+        attackerAccountId:
+          type: string
+          format: uuid
+        defenderAccountId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [declared, interactive, resolving, completed]
+        declaredAt:
+          type: string
+          format: date-time
+        outcome:
+          type: string
+          enum: [attacker_win, defender_win, cancelled]
+
+x-websockets:
+  /session:
+    description: Hack session real-time channel
+    clientMessages:
+      - connect
+      - run_tool
+      - shell_command
+      - claim
+      - disconnect
+    serverMessages:
+      - session_started
+      - tool_output
+      - shell_output
+      - trace_progress
+      - claimed
+      - traced
+      - tick_applied
+      - error
+  /siege/{id}:
+    description: Interactive siege defense window
+    clientMessages:
+      - join
+      - deploy_virus
+      - defend_action
+    serverMessages:
+      - siege_state
+      - phase_change
+      - outcome
+      - error

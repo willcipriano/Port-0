@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: port0
+      POSTGRES_PASSWORD: port0
+      POSTGRES_DB: port0
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U port0']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.service
+      args:
+        SERVICE: auth
+        PORT: 3001
+    environment:
+      AUTH_PORT: 3001
+      DATABASE_URL: postgresql://port0:port0@postgres:5432/port0
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3001/health']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  game-api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.service
+      args:
+        SERVICE: game-api
+        PORT: 3002
+    environment:
+      GAME_API_PORT: 3002
+      DATABASE_URL: postgresql://port0:port0@postgres:5432/port0
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '3002:3002'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3002/health']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  tick-worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.service
+      args:
+        SERVICE: tick-worker
+        PORT: 3003
+    environment:
+      TICK_WORKER_PORT: 3003
+      DATABASE_URL: postgresql://port0:port0@postgres:5432/port0
+      REDIS_URL: redis://redis:6379
+      TICK_INTERVAL_MINUTES: 15
+    ports:
+      - '3003:3003'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3003/health']
+      interval: 10s
+      timeout: 5s
+      retries: 3

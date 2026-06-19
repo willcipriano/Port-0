@@ -2,11 +2,11 @@
 
 **Goal:** One generated subnet, central registry, OS archetypes, and server-side shell simulation sufficient for L1–L3 targets.
 
-**Prerequisites:** [01-foundation.md](01-foundation.md)  
+**Prerequisites:** [01-foundation.md](01-foundation.md) ✓ (merged 2026-06-19)  
 **Blocks:** Stages 3, 4, 5  
 **Spec refs:** [04-world-and-topology.md](../spec/04-world-and-topology.md), [05-machines-and-shells.md](../spec/05-machines-and-shells.md), [18-content-authoring.md](../spec/18-content-authoring.md)
 
----
+**Status:** Ready to start
 
 ## 2.1 World Configuration
 

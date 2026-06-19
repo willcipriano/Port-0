@@ -24,16 +24,16 @@ Port 0 is a **server-authoritative multiplayer hacking MMO**: one shared subnet 
 
 ## Stage Index
 
-| Stage | Document | Outcome |
-|-------|----------|---------|
-| 0 | [00-pre-flight.md](00-pre-flight.md) | Stack locked, repo scaffolded, TBDs triaged |
-| 1 | [01-foundation.md](01-foundation.md) | Auth, persistence, deployment skeleton |
-| 2 | [02-world-and-machines.md](02-world-and-machines.md) | Subnet, registry, shell sim, OS archetypes |
-| 3 | [03-hack-sessions.md](03-hack-sessions.md) | Real-time connect → trace → claim loop |
-| 4 | [04-tick-economy.md](04-tick-economy.md) | Scans, market, income, heat, stocks |
-| 5 | [05-pvp-sieges.md](05-pvp-sieges.md) | Fleet, sieges, viruses, recon |
-| 6 | [06-client-ui.md](06-client-ui.md) | Multi-window UI, OAuth flow, SFX |
-| 7 | [07-mvp-ship.md](07-mvp-ship.md) | Content, integration, launch checklist |
+| Stage | Document | Outcome | Status |
+|-------|----------|---------|--------|
+| 0 | [00-pre-flight.md](00-pre-flight.md) | Stack locked, repo scaffolded, TBDs triaged | **Complete** (2026-06-19) |
+| 1 | [01-foundation.md](01-foundation.md) | Auth, persistence, deployment skeleton | **Complete** — merged [PR #1](https://github.com/willcipriano/Port-0/pull/1) (2026-06-19) |
+| 2 | [02-world-and-machines.md](02-world-and-machines.md) | Subnet, registry, shell sim, OS archetypes | **Next** |
+| 3 | [03-hack-sessions.md](03-hack-sessions.md) | Real-time connect → trace → claim loop | Pending |
+| 4 | [04-tick-economy.md](04-tick-economy.md) | Scans, market, income, heat, stocks | Pending |
+| 5 | [05-pvp-sieges.md](05-pvp-sieges.md) | Fleet, sieges, viruses, recon | Pending |
+| 6 | [06-client-ui.md](06-client-ui.md) | Multi-window UI, OAuth flow, SFX | Pending |
+| 7 | [07-mvp-ship.md](07-mvp-ship.md) | Content, integration, launch checklist | Pending |
 
 Supporting doc: [TBD-registry.md](TBD-registry.md) — consolidated open design inputs.
 

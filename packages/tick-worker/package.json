@@ -12,7 +12,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@port0/shared": "*"
+    "@hono/node-server": "^1.14.4",
+    "@port0/db": "*",
+    "@port0/shared": "*",
+    "hono": "^4.7.11"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

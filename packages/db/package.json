@@ -1,26 +1,31 @@
 {
-  "name": "@port0/auth",
+  "name": "@port0/db",
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "node -e \"process.exit(0)\"",
-    "test": "vitest run",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js"
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.4",
-    "@hono/zod-validator": "^0.7.0",
-    "@port0/db": "*",
     "@port0/shared": "*",
     "hono": "^4.7.11",
-    "zod": "^3.25.76"
+    "ioredis": "^5.6.1",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
+    "@types/pg": "^8.15.4",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"

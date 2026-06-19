@@ -6,20 +6,20 @@
 **Blocks:** Stages 3, 4, 5  
 **Spec refs:** [04-world-and-topology.md](../spec/04-world-and-topology.md), [05-machines-and-shells.md](../spec/05-machines-and-shells.md), [18-content-authoring.md](../spec/18-content-authoring.md)
 
-**Status:** Ready to start
+**Status:** In progress — 2.2 merged [PR #2](https://github.com/willcipriano/Port-0/pull/2) (2026-06-19)
 
 ## 2.1 World Configuration
 
 **Tasks:**
 
-- [ ] Define MVP subnet in `content/subnet/mvp.yaml`:
+- [x] Define MVP subnet in `content/subnet/mvp-subnet.json`:
   - Zone name and theme (residential/mixed)
-  - IPv6 prefix (e.g. `2001:db8:1:1::/64`)
-  - Machine count target
-  - Heat baseline
-  - Landmark slot reservations
-- [ ] World bootstrap job: generate subnet on first deploy or via admin command
-- [ ] Store subnet-level heat in `world_state` table
+  - IPv6 prefix (`2001:db8:1:7::/64`)
+  - Machine count target (300 proc-gen + 3 landmarks)
+  - Heat baseline (0 via `world_subnets.heat_level`)
+  - Landmark slot reservations (fixed addresses in `content/landmarks/mvp-landmarks.json`)
+- [x] World bootstrap job: `bootstrapWorld()` on seed + `npm run db:bootstrap` CLI
+- [ ] Store subnet-level heat in `world_state` table *(currently `world_subnets.heat_level`)*
 
 **Acceptance:** Single subnet exists with configured prefix; heat initialized to baseline.
 
@@ -27,13 +27,15 @@
 
 ## 2.2 Procedural Generation
 
+**Status:** Complete — merged [PR #2](https://github.com/willcipriano/Port-0/pull/2) (2026-06-19)
+
 **Tasks:**
 
-- [ ] Template loader from `content/archetypes/*.yaml`
-- [ ] Weighted selection: OS archetype, component levels, resources (CPU/RAM/storage)
-- [ ] IPv6 allocator: sequential or seeded random within prefix; collision-free
-- [ ] Reserve landmark addresses before filling proc-gen slots
-- [ ] Deterministic seed option for reproducible dev/staging worlds
+- [x] Template loader from `content/archetypes/*` (JSON or YAML)
+- [x] Weighted selection: OS archetype, component levels, resources (CPU/RAM/storage)
+- [x] IPv6 allocator: sequential within prefix; collision-free
+- [x] Reserve landmark addresses before filling proc-gen slots
+- [x] Deterministic seed option for reproducible dev/staging worlds (`DEFAULT_WORLD_SEED`, `--seed=`)
 
 **Proc-gen parameters (placeholder until TBD):**
 
@@ -43,7 +45,7 @@
 | L1 bias | 60% CheapServer, 30% Generic Linux, 10% other |
 | Component range L1 | password/firewall/alarm 1–2 |
 
-- [ ] Unit tests: generation count, unique IPv6, landmark slots preserved
+- [x] Unit tests: generation count, unique IPv6, landmark slots preserved
 
 ---
 
@@ -161,7 +163,7 @@ Each landmark file:
 
 ## Acceptance Criteria (Stage 2 Complete)
 
-- [ ] Subnet bootstraps with N machines + landmarks at fixed addresses
+- [x] Subnet bootstraps with N machines + landmarks at fixed addresses *(303 machines via seed/bootstrap; fingerprint API pending 2.4)*
 - [ ] Public API returns machine fingerprint without owner
 - [ ] CheapServer backdoor grants root; hardened machine has backdoor removed
 - [ ] Shell commands update machine state (alarm disable persists)

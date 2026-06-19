@@ -40,7 +40,8 @@ docker compose -f infra/docker-compose.yml up --build
 
 # Or run services locally (Postgres/Redis via Docker):
 npm run db:migrate
-npm run db:seed
+npm run db:seed          # includes world bootstrap (303 machines on empty DB)
+npm run db:bootstrap     # machines only; use --force to regen
 npm run dev:auth
 npm run dev:game-api
 npm run dev:tick-worker

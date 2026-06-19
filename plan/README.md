@@ -28,7 +28,7 @@ Port 0 is a **server-authoritative multiplayer hacking MMO**: one shared subnet 
 |-------|----------|---------|--------|
 | 0 | [00-pre-flight.md](00-pre-flight.md) | Stack locked, repo scaffolded, TBDs triaged | **Complete** (2026-06-19) |
 | 1 | [01-foundation.md](01-foundation.md) | Auth, persistence, deployment skeleton | **Complete** — merged [PR #1](https://github.com/willcipriano/Port-0/pull/1) (2026-06-19) |
-| 2 | [02-world-and-machines.md](02-world-and-machines.md) | Subnet, registry, shell sim, OS archetypes | **Next** |
+| 2 | [02-world-and-machines.md](02-world-and-machines.md) | Subnet, registry, shell sim, OS archetypes | **In progress** — 2.2 merged [PR #2](https://github.com/willcipriano/Port-0/pull/2) (2026-06-19) |
 | 3 | [03-hack-sessions.md](03-hack-sessions.md) | Real-time connect → trace → claim loop | Pending |
 | 4 | [04-tick-economy.md](04-tick-economy.md) | Scans, market, income, heat, stocks | Pending |
 | 5 | [05-pvp-sieges.md](05-pvp-sieges.md) | Fleet, sieges, viruses, recon | Pending |

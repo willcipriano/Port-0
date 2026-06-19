@@ -55,6 +55,25 @@ npm run dev
 
 This starts Postgres + Redis via Docker, runs migrations/seed, then auth (:3001), game-api (:3002), and tick-worker (:3003).
 
+Seed also bootstraps the MVP subnet (300 proc-gen machines + 3 landmarks) if the `machines` table is empty.
+
+## World bootstrap (dev)
+
+Proc-gen lives in `@port0/shared`; persistence is via `@port0/db`.
+
+```bash
+# Seed subnet metadata, market catalog, and machines (skips machine insert if already populated)
+npm run db:seed
+
+# Bootstrap machines only
+npm run db:bootstrap
+
+# Force regen with a custom seed (deletes existing machines)
+npm run world:bootstrap -w @port0/db -- --force --seed=42
+```
+
+Default seed is reproducible across dev/staging (`DEFAULT_WORLD_SEED` in `@port0/shared`). Landmarks keep fixed IPv6 addresses (`::1`, `::2`, `::3`); proc-gen fills from `::4` upward.
+
 ## Manual tick trigger (dev)
 
 ```bash

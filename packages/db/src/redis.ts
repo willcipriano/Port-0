@@ -1,8 +1,10 @@
 import { Redis } from 'ioredis';
+import { loadEnvFile } from './loadEnv.js';
 
 let redis: Redis | null = null;
 
 export function getRedis(): Redis {
+  loadEnvFile();
   if (!redis) {
     const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
     redis = new Redis(url, { maxRetriesPerRequest: 3, lazyConnect: true });

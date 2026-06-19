@@ -1,10 +1,12 @@
 import pg from 'pg';
+import { loadEnvFile } from './loadEnv.js';
 
 const { Pool } = pg;
 
 let pool: pg.Pool | null = null;
 
 export function getPool(): pg.Pool {
+  loadEnvFile();
   if (!pool) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {

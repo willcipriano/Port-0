@@ -17,6 +17,7 @@
     "dev:mock": "npm run dev:mock -w @port0/shared",
     "db:migrate": "npm run migrate -w @port0/db",
     "db:seed": "npm run seed -w @port0/db",
+    "db:bootstrap": "npm run world:bootstrap -w @port0/db",
     "validate-content": "npm run validate-content -w @port0/shared"
   },
   "devDependencies": {

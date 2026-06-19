@@ -12,12 +12,15 @@ ENV PORT=${PORT}
 
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
+COPY packages/db/package.json packages/db/
 COPY packages/${SERVICE}/package.json packages/${SERVICE}/
 
 RUN npm install --ignore-scripts 2>/dev/null || npm install
 
 COPY packages/shared packages/shared
+COPY packages/db packages/db
 COPY packages/${SERVICE} packages/${SERVICE}
+COPY content content
 
 WORKDIR /app/packages/${SERVICE}
 

@@ -7,3 +7,7 @@ export * from './types/world.js';
 export * from './constants/ipv6.js';
 export * from './content/schemas.js';
 export { startHealthServer, type ServiceConfig } from './server/health.js';
+export * from './auth/jwt.js';
+export * from './auth/accountStatus.js';
+export * from './http/errors.js';
+export * from './http/logger.js';

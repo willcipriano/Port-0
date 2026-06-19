@@ -20,6 +20,14 @@
 # Install dependencies
 npm install
 
+# Copy env and start Postgres + Redis + services
+cp .env.example .env
+npm run dev
+```
+
+See [docs/local-development.md](docs/local-development.md) for OAuth setup and dev auth bypass.
+
+```bash
 # Validate content schemas
 npm run validate-content
 
@@ -27,18 +35,16 @@ npm run validate-content
 npm run typecheck
 npm run test
 
-# Start backend stack (PostgreSQL, Redis, auth, game-api, tick-worker)
+# Start backend stack via Docker (all services)
 docker compose -f infra/docker-compose.yml up --build
 
-# In separate terminals — local dev without Docker:
-cp .env.example .env
+# Or run services locally (Postgres/Redis via Docker):
+npm run db:migrate
+npm run db:seed
 npm run dev:auth
 npm run dev:game-api
 npm run dev:tick-worker
 npm run dev:client
-
-# Mock API for client development
-npm run dev:mock
 ```
 
 **Health checks:** `http://localhost:3001/health`, `:3002/health`, `:3003/health`

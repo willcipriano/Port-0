@@ -35,6 +35,9 @@ npm run validate-content
 npm run typecheck
 npm run test
 
+# Live hack-session smoke test (game-api must be running)
+npm run test:hack-session
+
 # Start backend stack via Docker (all services)
 docker compose -f infra/docker-compose.yml up --build
 
@@ -50,7 +53,11 @@ npm run dev:client
 
 **Health checks:** `http://localhost:3001/health`, `:3002/health`, `:3003/health`
 
+**Hack sessions (WebSocket):** `ws://localhost:3002/session?token=...` — see [docs/local-development.md](docs/local-development.md#hack-sessions-stage-3)
+
 **Mock API:** `http://localhost:3099` (serves stub REST + OpenAPI at `/openapi.yaml`)
+
+**Implementation progress:** Stages 0–1 and 2.2 (world bootstrap) and **Stage 3 (hack sessions)** are merged; next up: [Stage 4 tick economy](plan/04-tick-economy.md) and [Stage 6 client UI](plan/06-client-ui.md) in parallel.
 
 ## Stack (MVP — locked Stage 0)
 

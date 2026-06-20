@@ -1,5 +1,6 @@
 {
   "balance_version": "balance-v0",
   "craft_minutes": 30,
-  "uses": 3
+  "uses": 3,
+  "source_code_craft_time_multiplier": 0.5
 }

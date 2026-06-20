@@ -6,6 +6,7 @@ export interface ShellResult {
   alarmDisabled?: boolean;
   exfilLoot?: { label: string; lootType: 'data' | 'credentials' | 'source_code' };
   failedExploit?: boolean;
+  logAnalysisPath?: string;
 }
 
 export function executeShellCommand(session: HackSessionState, rawCommand: string): ShellResult {
@@ -32,6 +33,20 @@ export function executeShellCommand(session: HackSessionState, rawCommand: strin
           ? 'CheapServer OS 1.0 — "Security through simplicity"'
           : `${session.target.osArchetypeId} — keep out`;
       return { output: motd };
+    }
+    if (
+      path === '/var/log/auth.log' ||
+      path === 'var/log/auth.log' ||
+      path === '/var/log/syslog' ||
+      path === 'var/log/syslog'
+    ) {
+      if (session.shellAccessLevel === 'guest' && !session.passwordCracked) {
+        return { output: `cat: ${path}: Permission denied`, failedExploit: true };
+      }
+      return {
+        output: `[reading ${path} — analyze with rig tools for ownership fingerprints]`,
+        logAnalysisPath: path,
+      };
     }
     return { output: `cat: ${path}: No such file` };
   }

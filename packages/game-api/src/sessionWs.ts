@@ -1,6 +1,11 @@
 import type { WSContext } from 'hono/ws';
 import {
   loadToolsCatalog,
+  loadSiegeBalance,
+  rollReconProbe,
+  analyzeOwnershipLogs,
+  formatReconOutput,
+  formatLogAnalysisOutput,
   type HackSessionState,
   type SessionClientMessage,
   type SessionServerMessage,
@@ -23,13 +28,32 @@ import {
   findMachineByIpv6,
   getActiveSession,
   getDefaultSubnetId,
+  getMachineOwner,
   getSubnetHeat,
   listInstalledTools,
   saveHackSession,
+  storeIntel,
   type DbAccountWithRig,
 } from '@port0/db';
 
 const TICK_INTERVAL_MS = 1000;
+
+async function processLogIntel(
+  session: HackSessionState,
+  ownerHandle: string | null,
+): Promise<string | null> {
+  const balance = loadSiegeBalance();
+  const result = analyzeOwnershipLogs(ownerHandle, session.target.osArchetypeId, balance);
+  if (!result) return null;
+  await storeIntel(
+    session.accountId,
+    session.target.ipv6,
+    result.ownerHint,
+    result.confidence,
+    result.source,
+  );
+  return formatLogAnalysisOutput(result);
+}
 
 interface SessionSocketState {
   account: DbAccountWithRig;
@@ -97,7 +121,25 @@ function startTickLoop(ws: WSContext, state: SessionSocketState): void {
   state.tickTimer = setInterval(async () => {
     if (!state.session) return;
     try {
+      const owner = await getMachineOwner(state.session.target.id);
+      const ownerHandle = owner?.displayHandle ?? (owner ? `operator-${owner.accountId.slice(0, 8)}` : null);
+
       const result = tickSession(state.session, Date.now(), tools);
+
+      for (const msg of result.messages) {
+        if (msg.type === 'tool_completed' && msg.toolId === 'recon_l1') {
+          const reconResult = rollReconProbe(ownerHandle, loadSiegeBalance(), Math.random());
+          await storeIntel(
+            state.session.accountId,
+            state.session.target.ipv6,
+            reconResult.ownerHint,
+            reconResult.confidence,
+            reconResult.source,
+          );
+          msg.output = formatReconOutput(reconResult);
+        }
+      }
+
       sendMany(ws, result.messages);
       await persistSession(state.session);
 
@@ -223,7 +265,16 @@ export function createSessionWebSocketHandlers(account: DbAccountWithRig, subnet
             }
             const beforeLoot = state.session.lootCollected.length;
             const shellResult = handleShellCommand(state.session, message.command, nowMs);
-            sendMany(ws, shellResult.messages);
+            const owner = await getMachineOwner(state.session.target.id);
+            const ownerHandle = owner?.displayHandle ?? (owner ? `operator-${owner.accountId.slice(0, 8)}` : null);
+            let output = shellResult.messages;
+            if (shellResult.messages[0]?.type === 'shell_output' && shellResult.messages[0].output.includes('analyze with rig')) {
+              const logOutput = await processLogIntel(state.session, ownerHandle);
+              if (logOutput) {
+                output = [{ type: 'shell_output' as const, output: logOutput }];
+              }
+            }
+            sendMany(ws, output);
             const newLoot = state.session.lootCollected.slice(beforeLoot);
             for (const label of newLoot) {
               const lootType = label.includes('credential')

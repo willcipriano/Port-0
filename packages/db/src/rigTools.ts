@@ -30,6 +30,19 @@ export async function ensureStarterTools(accountId: string): Promise<void> {
   }
 }
 
+export async function installTool(
+  client: import('pg').PoolClient,
+  accountId: string,
+  toolId: string,
+): Promise<void> {
+  await client.query(
+    `INSERT INTO rig_tools (account_id, tool_id)
+     VALUES ($1, $2)
+     ON CONFLICT DO NOTHING`,
+    [accountId, toolId],
+  );
+}
+
 export async function removeTools(accountId: string, toolIds: string[]): Promise<number> {
   if (toolIds.length === 0) return 0;
   const pool = getPool();

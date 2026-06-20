@@ -11,9 +11,20 @@ import {
   getAccountStatus,
   getDefaultSubnetId,
   getPool,
+  getScan,
+  listFleetMachines,
+  listMarketCatalog,
+  listTickSummariesSince,
+  MarketError,
+  purchaseMarketItem,
+  queueScan,
   runMigrations,
+  ScanError,
   seedDatabase,
+  sellLootItem,
+  InventoryError,
   toAccountResponse,
+  toScanResponse,
 } from '@port0/db';
 import {
   ApiError,
@@ -100,21 +111,96 @@ const scanSchema = z.object({ subnetId: z.string().min(1) });
 
 app.post('/scans', bearerAuthMiddleware, requireAction('scan'), zValidator('json', scanSchema), async (c) => {
   const body = c.req.valid('json');
-  return c.json({
-    id: `scan-${Date.now()}`,
-    accountId: getAccountId(c),
-    subnetId: body.subnetId,
-    status: 'queued',
-    queuedAt: new Date().toISOString(),
-  }, 201);
+  try {
+    const scan = await queueScan(getAccountId(c), body.subnetId);
+    return c.json(toScanResponse(scan), 201);
+  } catch (err) {
+    if (err instanceof ScanError) {
+      throw new ApiError(400, err.code, err.message);
+    }
+    throw err;
+  }
 });
 
-app.post('/market/purchase', bearerAuthMiddleware, requireAction('market_buy'), async (c) => {
-  throw new ApiError(501, 'not_implemented', 'Market purchases arrive in Stage 4');
+app.get('/scans/:id', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const scan = await getScan(c.req.param('id'), getAccountId(c));
+  if (!scan) throw new ApiError(404, 'not_found', 'Scan not found');
+  return c.json(toScanResponse(scan));
 });
+
+app.get('/market', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const items = await listMarketCatalog();
+  return c.json({ items });
+});
+
+const purchaseSchema = z.object({ toolId: z.string().min(1) });
+
+app.post(
+  '/market/purchase',
+  bearerAuthMiddleware,
+  requireAction('market_buy'),
+  zValidator('json', purchaseSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const result = await purchaseMarketItem(getAccountId(c), body.toolId);
+      return c.json(result);
+    } catch (err) {
+      if (err instanceof MarketError) {
+        const status = err.code === 'insufficient_funds' ? 402 : 400;
+        throw new ApiError(status, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
 
 app.get('/fleet', bearerAuthMiddleware, requireAction('fleet_mgmt'), async (c) => {
-  return c.json({ machines: [] });
+  const machines = await listFleetMachines(getAccountId(c));
+  return c.json({
+    machines: machines.map((m) => ({
+      ipv6: m.ipv6,
+      osArchetypeId: m.osArchetypeId,
+      isLandmark: m.isLandmark,
+      landmarkId: m.landmarkId,
+    })),
+  });
+});
+
+const sellSchema = z.object({ lootId: z.string().uuid() });
+
+app.post(
+  '/inventory/sell',
+  bearerAuthMiddleware,
+  requireAction('market_buy'),
+  zValidator('json', sellSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const result = await sellLootItem(getAccountId(c), body.lootId);
+      return c.json(result);
+    } catch (err) {
+      if (err instanceof InventoryError) {
+        throw new ApiError(404, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
+
+app.get('/me/sync', bearerAuthMiddleware, async (c) => {
+  const sinceTickRaw = c.req.query('sinceTick');
+  const sinceTick = sinceTickRaw != null ? Number(sinceTickRaw) : undefined;
+  const account = await findAccountById(getAccountId(c));
+  if (!account) throw new ApiError(404, 'not_found', 'Account not found');
+  const summaries = await listTickSummariesSince(
+    account.id,
+    sinceTick != null && !Number.isNaN(sinceTick) ? sinceTick : undefined,
+  );
+  return c.json({
+    account: toAccountResponse(account),
+    tickSummaries: summaries,
+  });
 });
 
 app.get(

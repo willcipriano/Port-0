@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { RigStats } from '@port0/shared';
 import { getPool } from './pool.js';
 import type { CreateAccountInput, DbAccount, DbAccountWithRig } from './types.js';
+import { ensureStarterTools } from './rigTools.js';
 
 function contentRoot(): string {
   if (process.env.CONTENT_DIR) return resolve(process.env.CONTENT_DIR);
@@ -61,6 +62,7 @@ export async function createAccount(input: CreateAccountInput): Promise<DbAccoun
       ],
     );
     await client.query('COMMIT');
+    await ensureStarterTools(account.id);
     const created = await findAccountById(account.id);
     if (!created) throw new Error('Failed to load created account');
     return created;
@@ -74,10 +76,16 @@ export async function createAccount(input: CreateAccountInput): Promise<DbAccoun
 
 export async function getOrCreateDevAccount(accountId: string): Promise<DbAccountWithRig> {
   const byId = await findAccountById(accountId);
-  if (byId) return byId;
+  if (byId) {
+    await ensureStarterTools(byId.id);
+    return byId;
+  }
 
   const byOAuth = await findAccountByOAuth('github', `dev:${accountId}`);
-  if (byOAuth) return byOAuth;
+  if (byOAuth) {
+    await ensureStarterTools(byOAuth.id);
+    return byOAuth;
+  }
 
   const defaults = loadDefaultRigAndBalance();
   return createAccount({

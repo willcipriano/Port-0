@@ -23,7 +23,11 @@ app.post('/tick/trigger', async (c) => {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_MANUAL_TICK !== 'true') {
     return c.json({ error: 'forbidden', message: 'Manual tick trigger disabled' }, 403);
   }
-  const tickId = currentTickId();
+  const explicit = c.req.query('tickId');
+  const tickId = explicit != null && explicit !== '' ? Number(explicit) : currentTickId();
+  if (Number.isNaN(tickId)) {
+    return c.json({ error: 'invalid_tick_id', message: 'tickId must be a number' }, 400);
+  }
   const result = await runTick(tickId);
   return c.json(result);
 });

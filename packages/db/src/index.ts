@@ -11,6 +11,30 @@ export { runMigrations } from './migrate.js';
 export { seedDatabase, seedTestAuditEvent } from './seed.js';
 export { bootstrapWorld, countMachines, type BootstrapWorldOptions, type BootstrapWorldResult } from './worldBootstrap.js';
 export {
+  findMachineByIpv6,
+  claimMachine,
+  incrementSubnetHeat,
+  getSubnetHeat,
+  getDefaultSubnetId,
+  backfillMachineSecurity,
+  type DbMachine,
+} from './machines.js';
+export {
+  listInstalledTools,
+  ensureStarterTools,
+  removeTools,
+  addLoot,
+} from './rigTools.js';
+export {
+  saveHackSession,
+  loadHackSession,
+  deleteHackSession,
+  getActiveSession,
+  getActiveSessionId,
+  createSessionId,
+} from './hackSessionStore.js';
+export { applyCatchPunishment, type PunishmentResult } from './punishments.js';
+export {
   findAccountByOAuth,
   findAccountById,
   createAccount,

@@ -1,6 +1,6 @@
-import { generateSubnet, DEFAULT_WORLD_SEED, type GeneratedMachine } from '@port0/shared';
-import type { PoolClient } from 'pg';
+import { generateSubnet, DEFAULT_WORLD_SEED } from '@port0/shared';
 import { getPool } from './pool.js';
+import { insertMachineRow } from './machines.js';
 
 export interface BootstrapWorldOptions {
   seed?: number;
@@ -18,14 +18,6 @@ export async function countMachines(): Promise<number> {
   const pool = getPool();
   const result = await pool.query<{ count: string }>('SELECT COUNT(*)::text AS count FROM machines');
   return Number(result.rows[0]?.count ?? 0);
-}
-
-async function insertMachine(client: PoolClient, machine: GeneratedMachine): Promise<void> {
-  await client.query(
-    `INSERT INTO machines (ipv6, os_archetype_id, is_landmark, landmark_id)
-     VALUES ($1, $2, $3, $4)`,
-    [machine.ipv6, machine.osArchetypeId, machine.isLandmark, machine.landmarkId ?? null],
-  );
 }
 
 export async function bootstrapWorld(options: BootstrapWorldOptions = {}): Promise<BootstrapWorldResult> {
@@ -52,7 +44,7 @@ export async function bootstrapWorld(options: BootstrapWorldOptions = {}): Promi
   try {
     await client.query('BEGIN');
     for (const machine of generated.machines) {
-      await insertMachine(client, machine);
+      await insertMachineRow(client, machine);
     }
     await client.query('COMMIT');
   } catch (err) {

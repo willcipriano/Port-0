@@ -9,6 +9,7 @@ import {
   findAccountById,
   getAccountId,
   getAccountStatus,
+  getDefaultSubnetId,
   getPool,
   runMigrations,
   seedDatabase,
@@ -23,6 +24,7 @@ import {
   sanitizeError,
   type ActionCategory,
 } from '@port0/shared';
+import { createSessionWebSocketHandlers } from './sessionWs.js';
 
 const app = new Hono();
 const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
@@ -139,18 +141,11 @@ app.get(
       if (isActionBlocked(account.status, 'hack')) {
         return { onOpen: (_e, ws) => ws.close(4403, blockedReason(account.status, 'hack')) };
       }
+      const subnetId = await getDefaultSubnetId();
+      return createSessionWebSocketHandlers(account, subnetId);
     } catch {
       return { onOpen: (_e, ws) => ws.close(4401, 'Invalid token') };
     }
-
-    return {
-      onOpen: (_event, ws) => {
-        ws.send(JSON.stringify({ type: 'session_ready', accountId }));
-      },
-      onMessage: (event, ws) => {
-        ws.send(JSON.stringify({ type: 'echo', data: event.data.toString() }));
-      },
-    };
   }),
 );
 

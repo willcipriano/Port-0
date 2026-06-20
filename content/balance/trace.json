@@ -1,6 +1,23 @@
 {
   "balance_version": "balance-v0",
   "base_seconds": 180,
-  "heat_multiplier": 1.0,
-  "blocker_extension_seconds": 120
+  "heat_multiplier_per_level": 0.05,
+  "blocker_extension_seconds": 240,
+  "failed_exploit_bump_seconds": 15,
+  "idle_timeout_minutes": 30,
+  "command_rate_limit_per_second": 5,
+  "faction_multipliers": {
+    "shady": 1.2,
+    "criminal": 1.0,
+    "government": 0.85
+  },
+  "punishment": {
+    "hospital_base_minutes": 5,
+    "hospital_fine": 50,
+    "prison_base_minutes": 10,
+    "prison_fine": 200,
+    "escalation_multiplier": 1.5,
+    "confiscate_illegal_on_prison": true
+  },
+  "illegal_tool_categories": ["cracker", "port_opener", "trace_blocker", "log_cleaner"]
 }

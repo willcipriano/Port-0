@@ -65,9 +65,36 @@ export function loadTraceBalance(root = worldContentRoot()): TraceBalance {
   };
 }
 
-export function loadHeatBalance(root = worldContentRoot()): { heatPerCaughtHack: number } {
+export function loadHeatBalance(root = worldContentRoot()): {
+  heatPerCaughtHack: number;
+  decayPerTick: number;
+  floorBaseline: number;
+} {
   const raw = loadJson(resolve(root, 'balance/heat.json')) as Record<string, unknown>;
-  return { heatPerCaughtHack: Number(raw.heat_per_caught_hack ?? 5) };
+  return {
+    heatPerCaughtHack: Number(raw.heat_per_caught_hack ?? 5),
+    decayPerTick: Number(raw.decay_per_tick ?? 1),
+    floorBaseline: Number(raw.floor_baseline ?? 0),
+  };
+}
+
+export interface EconomyBalance {
+  upkeepPerDronePerTick: number;
+  passiveIncomePerDronePerTick: number;
+  machinesPerScan: number;
+  lootSellPrice: number;
+  marketPriceVolatility: number;
+}
+
+export function loadEconomyBalance(root = worldContentRoot()): EconomyBalance {
+  const raw = loadJson(resolve(root, 'balance/economy.json')) as Record<string, unknown>;
+  return {
+    upkeepPerDronePerTick: Number(raw.upkeep_per_drone_per_tick ?? 5),
+    passiveIncomePerDronePerTick: Number(raw.passive_income_per_drone_per_tick ?? 10),
+    machinesPerScan: Number(raw.machines_per_scan ?? 5),
+    lootSellPrice: Number(raw.loot_sell_price ?? 25),
+    marketPriceVolatility: Number(raw.market_price_volatility ?? 0.05),
+  };
 }
 
 function mapTool(entry: ToolFileEntry): Tool {

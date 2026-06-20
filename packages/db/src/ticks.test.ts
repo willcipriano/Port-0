@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { currentTickId, TICK_INTERVAL_SECONDS } from './ticks.js';
+import { currentTickId, TICK_INTERVAL_SECONDS } from './tickId.js';
 
 describe('tick idempotency helpers', () => {
   it('computes stable tick id for a window', () => {

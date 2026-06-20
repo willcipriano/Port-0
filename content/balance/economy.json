@@ -4,6 +4,9 @@
   "starter_crypto": 500,
   "upkeep_per_drone_per_tick": 5,
   "passive_income_per_drone_per_tick": 10,
+  "machines_per_scan": 5,
+  "loot_sell_price": 25,
+  "market_price_volatility": 0.05,
   "l1_tool_prices": {
     "scanner_l1": 50,
     "cracker_l1": 75,

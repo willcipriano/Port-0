@@ -3,6 +3,8 @@ import type { PoolClient } from 'pg';
 import { creditAccount, saveAccountTickSummary } from './economy.js';
 import { deliverScansForTick } from './scans.js';
 import { fluctuateMarketPrices } from './market.js';
+import { advanceSiegesToResolving, resolveSiegesForTick } from './sieges.js';
+import { completeVirusCrafts } from './viruses.js';
 
 export interface AccountTickDelta {
   balanceChange: number;
@@ -125,10 +127,18 @@ export const generateMissionHooksStep: TickStep = {
   },
 };
 
+export const completeVirusCraftsStep: TickStep = {
+  name: 'CompleteVirusCrafts',
+  async run(ctx) {
+    await completeVirusCrafts(ctx.client);
+  },
+};
+
 export const resolveSiegesStep: TickStep = {
   name: 'ResolveSieges',
-  async run() {
-    // Stage 5 — siege resolution ticks
+  async run(ctx) {
+    await advanceSiegesToResolving(ctx.client, ctx.tickId);
+    await resolveSiegesForTick(ctx.client, ctx.tickId);
   },
 };
 
@@ -140,6 +150,7 @@ export const TICK_STEPS: TickStep[] = [
   moveStocksStep,
   decayHeatStep,
   generateMissionHooksStep,
+  completeVirusCraftsStep,
   resolveSiegesStep,
 ];
 

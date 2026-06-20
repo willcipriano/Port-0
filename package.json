@@ -19,7 +19,8 @@
     "db:seed": "npm run seed -w @port0/db",
     "db:bootstrap": "npm run world:bootstrap -w @port0/db",
     "validate-content": "npm run validate-content -w @port0/shared",
-    "test:hack-session": "tsx scripts/test-hack-session.ts"
+    "test:hack-session": "tsx scripts/test-hack-session.ts",
+    "test:pvp-sieges": "tsx scripts/test-pvp-sieges.ts"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

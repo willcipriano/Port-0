@@ -17,6 +17,8 @@ export {
   getSubnetHeat,
   getDefaultSubnetId,
   backfillMachineSecurity,
+  getMachineOwner,
+  transferMachineOwnership,
   type DbMachine,
 } from './machines.js';
 export {
@@ -68,8 +70,24 @@ export {
   listTickSummariesSince,
 } from './economy.js';
 export type { EconomyTransaction } from './economy.js';
-export { listFleetMachines, sellLootItem, InventoryError } from './fleet.js';
-export type { FleetMachine } from './fleet.js';
+export { listFleetMachines, getFleetResponse, updateFleetRole, toRigResponse, sellLootItem, InventoryError, FleetError } from './fleet.js';
+export type { FleetMachine, FleetRole, FleetAggregates, FleetResponse } from './fleet.js';
+export { storeIntel, listIntel, hasIntelOnTarget } from './intel.js';
+export type { IntelEntry } from './intel.js';
+export {
+  declareSiege,
+  getSiege,
+  getSiegeById,
+  applySiegeAction,
+  SiegeError,
+} from './sieges.js';
+export {
+  listVirusInventory,
+  listActiveCraftJobs,
+  startVirusCraft,
+  getVirusById,
+  VirusError,
+} from './viruses.js';
 export type { DbAccount, DbAccountWithRig, CreateAccountInput } from './types.js';
 export { bearerAuthMiddleware, getAccountId, getAccountStatus } from './middleware.js';
 export { toAccountResponse } from './serialize.js';

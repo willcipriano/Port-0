@@ -89,7 +89,7 @@ export function toolProgressPercent(run: HackSessionState['runningTools'][number
 export function applyToolEffect(
   session: HackSessionState,
   tool: Tool,
-): { output: string; traceBump?: boolean } {
+): { output: string; traceBump?: boolean; reconComplete?: boolean } {
   switch (tool.category) {
     case 'cracker':
       session.passwordCracked = true;
@@ -104,7 +104,8 @@ export function applyToolEffect(
       return { output: 'Trace countermeasure deployed. Trace deadline extended.' };
     case 'recon':
       return {
-        output: `Ownership fingerprint: faction=${session.target.faction}, archetype=${session.target.osArchetypeId}`,
+        output: 'Recon probe complete — awaiting fingerprint analysis.',
+        reconComplete: true,
       };
     case 'log_cleaner':
       return { output: 'Target logs scrubbed.' };

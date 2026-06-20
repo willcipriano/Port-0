@@ -1,5 +1,16 @@
 {
   "balance_version": "balance-v0",
-  "resolve_ticks": 2,
-  "interactive_window_minutes": 5
+  "resolve_ticks": 1,
+  "interactive_window_minutes": 5,
+  "allow_siege_without_recon": true,
+  "recon_success_chance": 0.65,
+  "recon_min_confidence": 0.4,
+  "log_analysis_confidence": 0.85,
+  "escalate_cpu_cost": 2,
+  "escalate_attack_bonus": 3,
+  "countermeasure_mp_cost": 2,
+  "countermeasure_defense_bonus": 4,
+  "virus_storage_damage_base": 15,
+  "defender_passive_firewall_weight": 2,
+  "defender_passive_antivirus_weight": 1
 }

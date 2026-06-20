@@ -97,6 +97,34 @@ export function loadEconomyBalance(root = worldContentRoot()): EconomyBalance {
   };
 }
 
+export function loadSiegeBalance(root = worldContentRoot()) {
+  const raw = loadJson(resolve(root, 'balance/siege.json')) as Record<string, unknown>;
+  return {
+    resolveTicks: Number(raw.resolve_ticks ?? 1),
+    interactiveWindowMinutes: Number(raw.interactive_window_minutes ?? 5),
+    allowSiegeWithoutRecon: Boolean(raw.allow_siege_without_recon ?? false),
+    reconSuccessChance: Number(raw.recon_success_chance ?? 0.65),
+    reconMinConfidence: Number(raw.recon_min_confidence ?? 0.4),
+    logAnalysisConfidence: Number(raw.log_analysis_confidence ?? 0.85),
+    escalateCpuCost: Number(raw.escalate_cpu_cost ?? 2),
+    escalateAttackBonus: Number(raw.escalate_attack_bonus ?? 3),
+    countermeasureMpCost: Number(raw.countermeasure_mp_cost ?? 2),
+    countermeasureDefenseBonus: Number(raw.countermeasure_defense_bonus ?? 4),
+    virusStorageDamageBase: Number(raw.virus_storage_damage_base ?? 15),
+    defenderPassiveFirewallWeight: Number(raw.defender_passive_firewall_weight ?? 2),
+    defenderPassiveAntivirusWeight: Number(raw.defender_passive_antivirus_weight ?? 1),
+  };
+}
+
+export function loadVirusBalance(root = worldContentRoot()) {
+  const raw = loadJson(resolve(root, 'balance/virus.json')) as Record<string, unknown>;
+  return {
+    craftMinutes: Number(raw.craft_minutes ?? 30),
+    uses: Number(raw.uses ?? 3),
+    sourceCodeCraftTimeMultiplier: Number(raw.source_code_craft_time_multiplier ?? 0.5),
+  };
+}
+
 function mapTool(entry: ToolFileEntry): Tool {
   return {
     id: entry.id,

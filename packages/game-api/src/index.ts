@@ -12,9 +12,15 @@ import {
   getDefaultSubnetId,
   getPool,
   getScan,
-  listFleetMachines,
+  getFleetResponse,
+  listIntel,
   listMarketCatalog,
   listTickSummariesSince,
+  listVirusInventory,
+  listActiveCraftJobs,
+  declareSiege,
+  getSiege,
+  applySiegeAction,
   MarketError,
   purchaseMarketItem,
   queueScan,
@@ -23,8 +29,14 @@ import {
   seedDatabase,
   sellLootItem,
   InventoryError,
+  SiegeError,
+  VirusError,
+  startVirusCraft,
   toAccountResponse,
+  toRigResponse,
   toScanResponse,
+  updateFleetRole,
+  FleetError,
 } from '@port0/db';
 import {
   ApiError,
@@ -36,6 +48,7 @@ import {
   type ActionCategory,
 } from '@port0/shared';
 import { createSessionWebSocketHandlers } from './sessionWs.js';
+import { createSiegeWebSocketHandlers } from './siegeWs.js';
 
 const app = new Hono();
 const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
@@ -156,15 +169,154 @@ app.post(
 );
 
 app.get('/fleet', bearerAuthMiddleware, requireAction('fleet_mgmt'), async (c) => {
-  const machines = await listFleetMachines(getAccountId(c));
-  return c.json({
-    machines: machines.map((m) => ({
-      ipv6: m.ipv6,
-      osArchetypeId: m.osArchetypeId,
-      isLandmark: m.isLandmark,
-      landmarkId: m.landmarkId,
-    })),
-  });
+  const fleet = await getFleetResponse(getAccountId(c));
+  return c.json(fleet);
+});
+
+app.get('/rig', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const account = await findAccountById(getAccountId(c));
+  if (!account) throw new ApiError(404, 'not_found', 'Account not found');
+  return c.json(toRigResponse(account));
+});
+
+const fleetRoleSchema = z.object({
+  role: z.enum(['staging', 'passive_income', 'defensive', 'owner']),
+});
+
+app.patch(
+  '/fleet/:ipv6/role',
+  bearerAuthMiddleware,
+  requireAction('fleet_mgmt'),
+  zValidator('json', fleetRoleSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const machine = await updateFleetRole(getAccountId(c), c.req.param('ipv6'), body.role);
+      return c.json({ machine });
+    } catch (err) {
+      if (err instanceof FleetError) {
+        throw new ApiError(404, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
+
+app.get('/intel', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const intel = await listIntel(getAccountId(c));
+  return c.json({ intel });
+});
+
+const declareSiegeSchema = z.object({
+  targetIpv6: z.string().min(1),
+  committedCpu: z.number().int().min(0).optional(),
+  committedRam: z.number().int().min(0).optional(),
+  virusIds: z.array(z.string().uuid()).optional(),
+});
+
+app.post(
+  '/sieges',
+  bearerAuthMiddleware,
+  requireAction('siege_attack'),
+  zValidator('json', declareSiegeSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const siege = await declareSiege({
+        attackerAccountId: getAccountId(c),
+        targetIpv6: body.targetIpv6,
+        committedCpu: body.committedCpu,
+        committedRam: body.committedRam,
+        virusIds: body.virusIds,
+      });
+      return c.json({ siege }, 201);
+    } catch (err) {
+      if (err instanceof SiegeError) {
+        const status =
+          err.code === 'recon_required' || err.code === 'own_target' || err.code === 'target_unowned'
+            ? 400
+            : err.code === 'target_not_found'
+              ? 404
+              : 400;
+        throw new ApiError(status, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
+
+app.get('/sieges/:id', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const result = await getSiege(c.req.param('id'), getAccountId(c));
+  if (!result) throw new ApiError(404, 'not_found', 'Siege not found');
+  return c.json(result);
+});
+
+const siegeActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('deploy_virus'), virusId: z.string().uuid(), targetIpv6: z.string().optional() }),
+  z.object({ type: z.literal('escalate') }),
+  z.object({ type: z.literal('target_drone'), targetIpv6: z.string().min(1) }),
+  z.object({ type: z.literal('countermeasure') }),
+  z.object({ type: z.literal('isolate_node'), targetIpv6: z.string().min(1) }),
+  z.object({ type: z.literal('defend_tool'), toolId: z.string().min(1) }),
+]);
+
+app.post(
+  '/sieges/:id/actions',
+  bearerAuthMiddleware,
+  zValidator('json', siegeActionSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    const category: ActionCategory =
+      body.type === 'deploy_virus' || body.type === 'escalate' || body.type === 'target_drone'
+        ? 'siege_attack'
+        : 'read_only';
+    const status = getAccountStatus(c);
+    if (isActionBlocked(status, category)) {
+      throw new ApiError(403, 'account_status_blocked', blockedReason(status, category));
+    }
+    try {
+      const result = await applySiegeAction(c.req.param('id'), getAccountId(c), body);
+      return c.json(result);
+    } catch (err) {
+      if (err instanceof SiegeError) {
+        throw new ApiError(400, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
+
+const craftVirusSchema = z.object({
+  effectType: z.literal('storage_damage'),
+  level: z.number().int().min(1).max(3),
+});
+
+app.post(
+  '/viruses/craft',
+  bearerAuthMiddleware,
+  requireAction('siege_attack'),
+  zValidator('json', craftVirusSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const job = await startVirusCraft(getAccountId(c), body.effectType, body.level);
+      return c.json(job, 201);
+    } catch (err) {
+      if (err instanceof VirusError) {
+        throw new ApiError(400, err.code, err.message);
+      }
+      throw err;
+    }
+  },
+);
+
+app.get('/viruses/inventory', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const accountId = getAccountId(c);
+  const [inventory, jobs] = await Promise.all([
+    listVirusInventory(accountId),
+    listActiveCraftJobs(accountId),
+  ]);
+  return c.json({ inventory, craftJobs: jobs });
 });
 
 const sellSchema = z.object({ lootId: z.string().uuid() });
@@ -202,6 +354,31 @@ app.get('/me/sync', bearerAuthMiddleware, async (c) => {
     tickSummaries: summaries,
   });
 });
+
+app.get(
+  '/siege',
+  upgradeWebSocket(async (c) => {
+    const token = c.req.query('token');
+    const siegeId = c.req.query('siegeId');
+    if (!token || !siegeId) {
+      return { onOpen: (_e, ws) => ws.close(4400, 'Missing token or siegeId') };
+    }
+    try {
+      const { parseDevBypassToken, verifyAccessToken } = await import('@port0/shared');
+      const { getOrCreateDevAccount } = await import('@port0/db');
+      const devId = parseDevBypassToken(token);
+      let accountId: string;
+      if (devId) {
+        accountId = (await getOrCreateDevAccount(devId)).id;
+      } else {
+        accountId = (await verifyAccessToken(token)).sub;
+      }
+      return createSiegeWebSocketHandlers(siegeId, accountId);
+    } catch {
+      return { onOpen: (_e, ws) => ws.close(4401, 'Invalid token') };
+    }
+  }),
+);
 
 app.get(
   '/session',

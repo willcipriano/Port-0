@@ -14,17 +14,83 @@ export interface DbMachine {
   faction: string;
   filesystem: Record<string, unknown>;
   alarm_active: boolean;
+  cpu: number;
+  ram: number;
+  storage: number;
 }
 
 export async function findMachineByIpv6(ipv6: string): Promise<DbMachine | null> {
   const pool = getPool();
   const result = await pool.query<DbMachine>(
     `SELECT id, ipv6, os_archetype_id, is_landmark, landmark_id,
-            security_components, faction, filesystem, alarm_active
+            security_components, faction, filesystem, alarm_active,
+            cpu, ram, storage
      FROM machines WHERE LOWER(ipv6) = LOWER($1)`,
     [ipv6],
   );
   return result.rows[0] ?? null;
+}
+
+export async function getMachineOwner(
+  machineId: string,
+): Promise<{ accountId: string; displayHandle: string | null } | null> {
+  const pool = getPool();
+  const result = await pool.query<{ owner_account_id: string; display_handle: string | null }>(
+    `SELECT mo.owner_account_id, a.display_handle
+     FROM machine_ownership mo
+     JOIN accounts a ON a.id = mo.owner_account_id
+     WHERE mo.machine_id = $1`,
+    [machineId],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return { accountId: row.owner_account_id, displayHandle: row.display_handle };
+}
+
+export async function transferMachineOwnership(
+  machineId: string,
+  fromAccountId: string,
+  toAccountId: string,
+  reason: string,
+  existingClient?: PoolClient,
+): Promise<void> {
+  const pool = getPool();
+  const client = existingClient ?? (await pool.connect());
+  const ownsClient = !existingClient;
+  try {
+    if (ownsClient) await client.query('BEGIN');
+    await client.query('DELETE FROM machine_ownership WHERE machine_id = $1', [machineId]);
+    await client.query(
+      `INSERT INTO machine_ownership (machine_id, owner_account_id)
+       VALUES ($1, $2)`,
+      [machineId, toAccountId],
+    );
+    await client.query('DELETE FROM fleet_membership WHERE machine_id = $1', [machineId]);
+    await client.query(
+      `INSERT INTO fleet_membership (account_id, machine_id, role)
+       VALUES ($1, $2, 'owner')`,
+      [toAccountId, machineId],
+    );
+    await client.query(
+      `INSERT INTO audit_log (event_type, account_id, payload)
+       VALUES ('ownership_transfer', $1, $2::jsonb)`,
+      [
+        toAccountId,
+        JSON.stringify({
+          machine_id: machineId,
+          from_account_id: fromAccountId,
+          to_account_id: toAccountId,
+          reason,
+        }),
+      ],
+    );
+    if (ownsClient) await client.query('COMMIT');
+  } catch (err) {
+    if (ownsClient) await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    if (ownsClient) client.release();
+  }
 }
 
 export async function claimMachine(machineId: string, accountId: string): Promise<void> {
@@ -98,8 +164,9 @@ export async function insertMachineRow(client: PoolClient, machine: GeneratedMac
   await client.query(
     `INSERT INTO machines (
        ipv6, os_archetype_id, is_landmark, landmark_id,
-       security_components, faction, filesystem, alarm_active
-     ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, true)`,
+       security_components, faction, filesystem, alarm_active,
+       cpu, ram, storage
+     ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, true, $8, $9, $10)`,
     [
       machine.ipv6,
       machine.osArchetypeId,
@@ -108,6 +175,9 @@ export async function insertMachineRow(client: PoolClient, machine: GeneratedMac
       JSON.stringify(machine.securityComponents),
       faction,
       JSON.stringify(filesystem),
+      machine.resources.cpu,
+      machine.resources.ram,
+      machine.resources.storage,
     ],
   );
 }

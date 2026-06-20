@@ -123,6 +123,72 @@ Landmark targets for testing:
 
 Balance tuning: `content/balance/trace.json` (trace speed, punishments, idle timeout).
 
+## Tick economy (Stage 4)
+
+15-minute world ticks run in the tick-worker (port 3003). Each tick delivers queued scans, applies drone income/upkeep, fluctuates market prices, and decays subnet heat.
+
+**Integration test** (requires `npm run dev` or game-api + tick-worker + Postgres + Redis):
+
+```bash
+npm run test:tick-economy
+```
+
+**Manual tick trigger** (dev only):
+
+```bash
+curl -X POST "http://localhost:3003/tick/trigger?tickId=1979998"
+```
+
+Use a fresh `tickId` (e.g. `MAX(tick_id)+1` from `world_ticks`) if the current window already completed. Queue a scan first:
+
+```bash
+curl -X POST http://localhost:3002/scans \
+  -H "Authorization: Bearer dev:00000000-0000-4000-8000-000000000001" \
+  -H "Content-Type: application/json" \
+  -d '{"subnetId":"block_7"}'
+```
+
+Offline catch-up: `GET /me/sync?sinceTick=N` returns per-tick balance and scan summaries.
+
+Balance tuning: `content/balance/economy.json`, `content/balance/heat.json`.
+
+## PvP sieges (Stage 5)
+
+Fleet, recon intel, virus crafting, and async sieges with an interactive window. Resolution runs on the tick pipeline after the window closes.
+
+**Integration test** (requires full dev stack):
+
+```bash
+npm run test:pvp-sieges
+```
+
+Creates two dev accounts, assigns drones, crafts a virus, declares a siege, applies interactive actions, triggers a tick, and verifies ownership transfer on attacker win.
+
+**Key REST endpoints** (game-api :3002):
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /fleet` | Owned drones with resources, roles, and aggregates (attack / mpPool / hp) |
+| `GET /rig` | Personal rig stats (not in fleet) |
+| `PATCH /fleet/:ipv6/role` | Assign `staging`, `passive_income`, or `defensive` |
+| `GET /intel` | Recon results (`ipv6 → owner_hint, confidence`) |
+| `POST /sieges` | Declare siege against a player-owned drone |
+| `GET /sieges/:id` | Siege state + interactive dashboard |
+| `POST /sieges/:id/actions` | Deploy virus, escalate, countermeasure, isolate, etc. |
+| `POST /viruses/craft` | Start offline virus craft (`storage_damage` at MVP) |
+| `GET /viruses/inventory` | Crafted viruses and in-progress jobs |
+
+**Siege WebSocket:** `ws://localhost:3002/siege?siegeId=<uuid>&token=...` — real-time dashboard updates for attacker and defender.
+
+**Recon during hack sessions:**
+
+- Run `recon_l1` tool against a target; results stored in `/intel`
+- On L2+ machines, `cat /var/log/auth.log` after shell access reveals owner fingerprints
+
+Redis publishes `siege_declared`, `siege_updated`, and `siege_outcome` events on `account:{id}:events`.
+
+Balance tuning: `content/balance/siege.json`, `content/balance/virus.json`.
+
 ## Staging (Fly.io)
 
 See [`infra/fly/README.md`](../infra/fly/README.md) for deployment notes. Stage 1 requires:

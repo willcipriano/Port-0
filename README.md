@@ -38,6 +38,12 @@ npm run test
 # Live hack-session smoke test (game-api must be running)
 npm run test:hack-session
 
+# Tick economy integration test (full dev stack must be running)
+npm run test:tick-economy
+
+# PvP siege integration test (full dev stack must be running)
+npm run test:pvp-sieges
+
 # Start backend stack via Docker (all services)
 docker compose -f infra/docker-compose.yml up --build
 
@@ -57,7 +63,7 @@ npm run dev:client
 
 **Mock API:** `http://localhost:3099` (serves stub REST + OpenAPI at `/openapi.yaml`)
 
-**Implementation progress:** Stages 0–1 and 2.2 (world bootstrap) and **Stage 3 (hack sessions)** are merged; next up: [Stage 4 tick economy](plan/04-tick-economy.md) and [Stage 6 client UI](plan/06-client-ui.md) in parallel.
+**Implementation progress:** Stages 0–1, 2.2 (world bootstrap), **Stage 3 (hack sessions)**, **Stage 4 core (tick economy)** ([PR #4](https://github.com/willcipriano/Port-0/pull/4)), and **Stage 5 (PvP sieges)** ([PR #5](https://github.com/willcipriano/Port-0/pull/5)) are merged. Remaining Stage 4 work: stocks, contracts, L2 catalog. Next: [Stage 6 client UI](plan/06-client-ui.md).
 
 ## Stack (MVP — locked Stage 0)
 

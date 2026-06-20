@@ -6,6 +6,8 @@
 **Blocks:** MVP success criteria 7–8  
 **Spec refs:** [06-rig-and-fleet.md](../spec/06-rig-and-fleet.md), [08-pvp-and-sieges.md](../spec/08-pvp-and-sieges.md), [07-tools-and-viruses.md](../spec/07-tools-and-viruses.md)
 
+**Status:** Complete — merged [PR #5](https://github.com/willcipriano/Port-0/pull/5) (2026-06-20). Optional follow-ups: registry intercept easter egg, crypto spoils, concurrent-siege load smoke test.
+
 ---
 
 ## 5.1 Fleet Model

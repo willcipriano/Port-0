@@ -6,6 +6,8 @@
 **Blocks:** Full MVP loop, Stage 5 siege resolution ticks  
 **Spec refs:** [02-core-gameplay-loop.md](../spec/02-core-gameplay-loop.md), [10-economy-and-market.md](../spec/10-economy-and-market.md), [11-progression-and-loot.md](../spec/11-progression-and-loot.md)
 
+**Status:** In progress — core merged [PR #4](https://github.com/willcipriano/Port-0/pull/4) (2026-06-20). Stocks, contracts, L2 catalog, and progression sim remain.
+
 ---
 
 ## 4.1 Tick Pipeline

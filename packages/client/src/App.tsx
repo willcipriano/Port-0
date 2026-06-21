@@ -1,11 +1,19 @@
-import { MVP_SUBNET_PREFIX } from '@port0/shared';
+import { useAuth } from './hooks/useAuth';
+import { LoginPage } from './components/LoginPage';
+import { AppShell } from './components/AppShell';
 
 export function App() {
+  const { state, login, logout } = useAuth();
+
+  if (state.phase === 'authed') {
+    return <AppShell account={state.account} onLogout={logout} />;
+  }
+
   return (
-    <main style={{ fontFamily: 'monospace', padding: '2rem', background: '#0a0a0a', color: '#33ff66', minHeight: '100vh' }}>
-      <h1>Port 0</h1>
-      <p>Client scaffold — Stage 6 adds flexlayout-react windowing.</p>
-      <p>MVP subnet: {MVP_SUBNET_PREFIX}/64</p>
-    </main>
+    <LoginPage
+      onLogin={login}
+      connecting={state.phase === 'connecting'}
+      error={state.phase === 'error' ? state.message : undefined}
+    />
   );
 }

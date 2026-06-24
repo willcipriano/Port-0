@@ -105,7 +105,7 @@ export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, on
         top: win.y,
         width: win.width,
         height: win.height,
-        display: win.minimized ? 'none' : 'flex',
+        display: win.minimized || win.closed ? 'none' : 'flex',
         flexDirection: 'column',
         zIndex: win.zIndex,
         background: 'var(--bg-panel)',

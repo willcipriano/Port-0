@@ -114,13 +114,13 @@ export function Taskbar({
             <div style={{ padding: '4px 8px 8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {APP_REGISTRY.map(app => {
                 const win = windows.find(w => w.id === app.id);
-                const isOpen = win && !win.minimized;
+                const isOpen = win && !win.closed && !win.minimized;
                 return (
                   <button
                     key={app.id}
                     onClick={() => {
                       if (win) {
-                        if (win.minimized) onOpen(app.id);
+                        if (win.closed || win.minimized) onOpen(app.id);
                         else onFocus(app.id);
                       } else {
                         onOpen(app.id);
@@ -258,9 +258,9 @@ export function Taskbar({
         {/* Divider */}
         <div style={{ width: '1px', height: '22px', background: 'var(--border)', flexShrink: 0 }} />
 
-        {/* Open window buttons */}
+        {/* Open / minimized window buttons (closed apps hidden — reopen from P:0 menu) */}
         <div style={{ display: 'flex', gap: '4px', flex: 1, overflow: 'hidden' }}>
-          {windows.map(win => {
+          {windows.filter(win => !win.closed).map(win => {
             const app = APP_REGISTRY.find(a => a.id === win.id);
             const isActive = !win.minimized;
             return (

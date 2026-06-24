@@ -61,7 +61,31 @@ npm install
 npm run dev
 ```
 
-This starts Postgres + Redis via Docker, runs migrations/seed, then auth (:3001), game-api (:3002), and tick-worker (:3003).
+This starts Postgres + Redis via Docker, runs migrations/seed, then auth (:3001), game-api (:3002), tick-worker (:3003), and the Vite client (:5173).
+
+Open **http://localhost:5173/** in your browser.
+
+## Client UI (mock API)
+
+The client proxies REST calls to the mock API on **:3099**. Start it in a **second terminal** while the client is running:
+
+```bash
+npm run dev:mock
+```
+
+Then log in at http://localhost:5173/ with any handle and access key.
+
+**Minimum setup for UI only** (no Docker / real backend):
+
+```bash
+# Terminal 1
+npm run dev:mock
+
+# Terminal 2
+npm run dev:client
+```
+
+If login shows `CONNECTION REFUSED`, the client dev server is not running or the mock API is not up — check http://localhost:5173/ and http://localhost:3099/health both return 200.
 
 Seed also bootstraps the MVP subnet (300 proc-gen machines + 3 landmarks) if the `machines` table is empty.
 

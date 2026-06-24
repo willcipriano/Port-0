@@ -11,20 +11,21 @@ export interface WinState {
   zIndex: number;
   minimized: boolean;
   maximized: boolean;
+  closed: boolean;
   /** position before maximize */
   restoreRect?: { x: number; y: number; width: number; height: number };
 }
 
-export type WinPatch = Partial<Pick<WinState, 'x' | 'y' | 'width' | 'height' | 'zIndex' | 'minimized' | 'maximized' | 'restoreRect'>>;
+export type WinPatch = Partial<Pick<WinState, 'x' | 'y' | 'width' | 'height' | 'zIndex' | 'minimized' | 'maximized' | 'closed' | 'restoreRect'>>;
 
 const TASKBAR_H = 44;
 
 const DEFAULT_WINDOWS: WinState[] = [
-  { id: 'world',    title: 'WORLD MAP',          component: 'WorldMap',    x: 10,   y: 10,  width: 400, height: 340, zIndex: 1, minimized: false, maximized: false },
-  { id: 'servers',  title: 'SERVER LIST',        component: 'ServerList',  x: 420,  y: 10,  width: 430, height: 340, zIndex: 2, minimized: false, maximized: false },
-  { id: 'terminal', title: 'TERMINAL',            component: 'Terminal',    x: 10,   y: 360, width: 490, height: 340, zIndex: 3, minimized: false, maximized: false },
-  { id: 'hardware', title: 'HARDWARE // RIG',     component: 'Hardware',    x: 860,  y: 10,  width: 420, height: 460, zIndex: 4, minimized: false, maximized: false },
-  { id: 'email',    title: 'EMAIL // CONTRACTS',  component: 'Email',       x: 510,  y: 360, width: 340, height: 340, zIndex: 5, minimized: false, maximized: false },
+  { id: 'world',    title: 'WORLD MAP',          component: 'WorldMap',    x: 10,   y: 10,  width: 400, height: 340, zIndex: 1, minimized: false, maximized: false, closed: false },
+  { id: 'servers',  title: 'SERVER LIST',        component: 'ServerList',  x: 420,  y: 10,  width: 430, height: 340, zIndex: 2, minimized: false, maximized: false, closed: false },
+  { id: 'terminal', title: 'TERMINAL',            component: 'Terminal',    x: 10,   y: 360, width: 490, height: 340, zIndex: 3, minimized: false, maximized: false, closed: false },
+  { id: 'hardware', title: 'HARDWARE // RIG',     component: 'Hardware',    x: 860,  y: 10,  width: 420, height: 460, zIndex: 4, minimized: false, maximized: false, closed: false },
+  { id: 'email',    title: 'EMAIL // CONTRACTS',  component: 'Email',       x: 510,  y: 360, width: 340, height: 340, zIndex: 5, minimized: false, maximized: false, closed: false },
 ];
 
 let zTop = 10;
@@ -45,13 +46,13 @@ export function useWindowManager() {
   }, []);
 
   const close = useCallback((id: string) => {
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, minimized: true } : w));
+    setWindows(prev => prev.map(w => w.id === id ? { ...w, closed: true, minimized: true } : w));
   }, []);
 
   const open = useCallback((id: string) => {
     zTop += 1;
     setActiveId(id);
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, minimized: false, zIndex: zTop } : w));
+    setWindows(prev => prev.map(w => w.id === id ? { ...w, closed: false, minimized: false, zIndex: zTop } : w));
   }, []);
 
   const toggleMinimize = useCallback((id: string) => {

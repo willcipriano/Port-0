@@ -44,6 +44,7 @@ const services = [
   { label: 'auth', script: 'dev:auth' },
   { label: 'api', script: 'dev:game-api' },
   { label: 'tick', script: 'dev:tick-worker' },
+  { label: 'client', script: 'dev:client' },
 ];
 
 let children = [];
@@ -65,7 +66,7 @@ async function main() {
   await run('npm', ['run', 'db:migrate'], { shell: true });
   await run('npm', ['run', 'db:seed'], { shell: true });
 
-  console.log('Starting auth (:3001), game-api (:3002), tick-worker (:3003)...');
+  console.log('Starting auth (:3001), game-api (:3002), tick-worker (:3003), client (:5173)...');
   children = services.map(({ label, script }) => spawnService(label, script));
 
   process.on('SIGINT', () => shutdown(0));

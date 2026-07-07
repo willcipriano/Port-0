@@ -17,6 +17,7 @@ export {
   getSubnetHeat,
   getDefaultSubnetId,
   backfillMachineSecurity,
+  backfillMachineLocation,
   getMachineOwner,
   transferMachineOwnership,
   type DbMachine,

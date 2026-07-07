@@ -27,6 +27,9 @@ export interface Machine {
   claimedAt?: string;
   isLandmark: boolean;
   landmarkId?: string;
+  /** Physical geographic location — unrelated to subnet / IPv6 address */
+  latitude: number;
+  longitude: number;
 }
 
 /** Public fingerprint returned before full recon */
@@ -35,4 +38,7 @@ export interface MachineFingerprint {
   osArchetypeId: OsArchetypeId;
   securitySummary: string;
   isLandmark: boolean;
+  /** Physical geographic location — unrelated to subnet / IPv6 address */
+  latitude: number;
+  longitude: number;
 }

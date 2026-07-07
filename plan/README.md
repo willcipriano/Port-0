@@ -118,3 +118,7 @@ Client work should **start in week 4** with mock APIs; do not wait for full back
 3. When implementing a task, cite the spec section in commit/PR descriptions.  
 4. Resolve TBDs in [TBD-registry.md](TBD-registry.md) before tuning-dependent tasks (trace formula, siege resolution, etc.).  
 5. Placeholder formulas are acceptable for first integration; mark them `balance-v0` in config.
+
+## Post-MVP ideas
+
+Expansion brainstorms (player classes, alternate fleet models) live in [`../docs/ideas/`](../docs/ideas/). Do not schedule implementation work from those docs until promoted into `spec/`.

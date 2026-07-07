@@ -20,3 +20,4 @@ export {
   type ArchetypeWeight,
 } from './procGenConfig.js';
 export { createRng, type Rng } from './rng.js';
+export { GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT, type GeoAnchor } from './geoAnchors.js';

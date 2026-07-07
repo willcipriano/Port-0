@@ -120,6 +120,30 @@ app.get('/world/subnet', bearerAuthMiddleware, requireAction('read_only'), async
   });
 });
 
+app.get('/world/nodes', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const pool = getPool();
+  const result = await pool.query<{
+    ipv6: string;
+    os_archetype_id: string;
+    is_landmark: boolean;
+    latitude: number | null;
+    longitude: number | null;
+  }>(
+    `SELECT ipv6, os_archetype_id, is_landmark, latitude, longitude
+     FROM machines
+     ORDER BY is_landmark DESC, ipv6 ASC`,
+  );
+  return c.json({
+    nodes: result.rows.map(row => ({
+      ipv6: row.ipv6,
+      osArchetypeId: row.os_archetype_id,
+      isLandmark: row.is_landmark,
+      latitude: row.latitude ?? 0,
+      longitude: row.longitude ?? 0,
+    })),
+  });
+});
+
 const scanSchema = z.object({ subnetId: z.string().min(1) });
 
 app.post('/scans', bearerAuthMiddleware, requireAction('scan'), zValidator('json', scanSchema), async (c) => {

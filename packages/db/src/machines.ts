@@ -1,5 +1,5 @@
 import type { SecurityComponents } from '@port0/shared';
-import { factionFromArchetype, defaultFilesystem } from '@port0/shared';
+import { factionFromArchetype, defaultFilesystem, createRng, GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT } from '@port0/shared';
 import type { GeneratedMachine } from '@port0/shared';
 import type { PoolClient } from 'pg';
 import { getPool } from './pool.js';
@@ -17,6 +17,8 @@ export interface DbMachine {
   cpu: number;
   ram: number;
   storage: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export async function findMachineByIpv6(ipv6: string): Promise<DbMachine | null> {
@@ -24,7 +26,7 @@ export async function findMachineByIpv6(ipv6: string): Promise<DbMachine | null>
   const result = await pool.query<DbMachine>(
     `SELECT id, ipv6, os_archetype_id, is_landmark, landmark_id,
             security_components, faction, filesystem, alarm_active,
-            cpu, ram, storage
+            cpu, ram, storage, latitude, longitude
      FROM machines WHERE LOWER(ipv6) = LOWER($1)`,
     [ipv6],
   );
@@ -165,8 +167,8 @@ export async function insertMachineRow(client: PoolClient, machine: GeneratedMac
     `INSERT INTO machines (
        ipv6, os_archetype_id, is_landmark, landmark_id,
        security_components, faction, filesystem, alarm_active,
-       cpu, ram, storage
-     ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, true, $8, $9, $10)`,
+       cpu, ram, storage, latitude, longitude
+     ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, true, $8, $9, $10, $11, $12)`,
     [
       machine.ipv6,
       machine.osArchetypeId,
@@ -178,6 +180,8 @@ export async function insertMachineRow(client: PoolClient, machine: GeneratedMac
       machine.resources.cpu,
       machine.resources.ram,
       machine.resources.storage,
+      machine.latitude,
+      machine.longitude,
     ],
   );
 }
@@ -204,6 +208,46 @@ export async function backfillMachineSecurity(): Promise<number> {
            filesystem = CASE WHEN filesystem = '{}'::jsonb THEN $4::jsonb ELSE filesystem END
        WHERE id = $1`,
       [row.id, JSON.stringify(defaults), faction, JSON.stringify(filesystem)],
+    );
+    updated += 1;
+  }
+  return updated;
+}
+
+/**
+ * Backfill latitude/longitude for any machine rows that are missing them.
+ * Uses a deterministic seed derived from the machine's IPv6 address so the
+ * result is reproducible without a full re-bootstrap.
+ */
+export async function backfillMachineLocation(): Promise<number> {
+  const pool = getPool();
+  const result = await pool.query<{ id: string; ipv6: string }>(
+    `SELECT id, ipv6 FROM machines WHERE latitude IS NULL OR longitude IS NULL`,
+  );
+  let updated = 0;
+  for (const row of result.rows) {
+    // Derive seed from the IPv6 string (simple djb2-style hash)
+    let seed = 5381;
+    for (let i = 0; i < row.ipv6.length; i++) {
+      seed = ((seed * 33) ^ row.ipv6.charCodeAt(i)) >>> 0;
+    }
+    const rng = createRng(seed);
+    // Weighted anchor pick (mirrors rollLocation in generateSubnet)
+    let roll = rng.next() * GEO_ANCHOR_TOTAL_WEIGHT;
+    let anchor = GEO_ANCHORS[GEO_ANCHORS.length - 1]!;
+    for (const a of GEO_ANCHORS) {
+      roll -= a.weight;
+      if (roll <= 0) { anchor = a; break; }
+    }
+    const u1 = Math.max(1e-10, rng.next());
+    const u2 = rng.next();
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const jitterScale = 2.5;
+    const latitude  = Math.min(85,  Math.max(-85,  anchor.lat + z * jitterScale));
+    const longitude = Math.min(180, Math.max(-180, anchor.lng + z * jitterScale));
+    await pool.query(
+      `UPDATE machines SET latitude = $2, longitude = $3 WHERE id = $1`,
+      [row.id, latitude, longitude],
     );
     updated += 1;
   }

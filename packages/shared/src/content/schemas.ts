@@ -62,6 +62,9 @@ export const landmarkSchema = z.object({
   ipv6: z.string().regex(/^2001:db8:[0-9a-f]+:[0-9a-f]+::[0-9a-f]+$/i),
   role: z.string().min(1),
   os_archetype_id: z.enum(['cheap_server', 'generic_linux', 'corp_workstation', 'mainframe']),
+  /** Optional physical coordinates — if omitted, proc-gen assigns from geoAnchors */
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const landmarksFileSchema = z.object({

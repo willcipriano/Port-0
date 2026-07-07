@@ -35,6 +35,11 @@ MVP proves: scan → discover → connect → hack under trace pressure → clai
 - Stock tick movement with at least 1 mission hook type
 - Throw-in-deep onboarding
 
+### Player class
+
+- **Operator only** — implicit default; direct hack → claim → fleet loop
+- Alternate classes (e.g. **Steamer**, fan-driven fleet) are post-MVP; see [docs/ideas/01-player-classes-steamer.md](../docs/ideas/01-player-classes-steamer.md)
+
 ### Multiplayer
 
 - Shared world, solo ops
@@ -60,6 +65,7 @@ See [16-technical-architecture.md](16-technical-architecture.md).
 | Feature | Target phase |
 |---------|-------------|
 | Multiple subnets / zones | Post-MVP |
+| Player classes (Steamer, etc.) | Phase 2–3 — [ideas doc](../docs/ideas/01-player-classes-steamer.md) |
 | Player-to-player market | Phase 4 |
 | Player contracts / escrow | Phase 4 |
 | Groups / crews | Phase 3 |
@@ -78,6 +84,7 @@ See [16-technical-architecture.md](16-technical-architecture.md).
 | **MVP** | One subnet, core loop, sieges, NPC market |
 | **PvP polish** | Siege balance, recon depth, corporate security |
 | **Groups** | Crews, shared fleets, crew comms |
+| **Player classes** | Operator vs Steamer (fan-sourced fleet), hybrid crew comps |
 | **Player economy** | P2P market, contract board, escrow |
 | **Scale** | Multi-subnet, zone expansion, partitioning |
 

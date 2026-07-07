@@ -6,21 +6,27 @@
       "name": "Bob's Plumbing HQ",
       "ipv6": "2001:db8:1:7::1",
       "role": "contract_giver",
-      "os_archetype_id": "generic_linux"
+      "os_archetype_id": "generic_linux",
+      "latitude": 40.71,
+      "longitude": -74.01
     },
     {
       "id": "shady_isp",
       "name": "Shady Hollow ISP",
       "ipv6": "2001:db8:1:7::2",
       "role": "market_adjacent",
-      "os_archetype_id": "corp_workstation"
+      "os_archetype_id": "corp_workstation",
+      "latitude": 51.51,
+      "longitude": -0.13
     },
     {
       "id": "community_hub",
       "name": "Block 7 Community Hub",
       "ipv6": "2001:db8:1:7::3",
       "role": "high_traffic_decoy",
-      "os_archetype_id": "cheap_server"
+      "os_archetype_id": "cheap_server",
+      "latitude": 35.69,
+      "longitude": 139.69
     }
   ]
 }

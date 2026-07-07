@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getPool } from './pool.js';
 import { bootstrapWorld } from './worldBootstrap.js';
-import { backfillMachineSecurity } from './machines.js';
+import { backfillMachineSecurity, backfillMachineLocation } from './machines.js';
 
 function contentRoot(): string {
   if (process.env.CONTENT_DIR) return resolve(process.env.CONTENT_DIR);
@@ -73,6 +73,11 @@ export async function seedDatabase(): Promise<void> {
   const backfilled = await backfillMachineSecurity();
   if (backfilled > 0) {
     console.log(`Backfilled security components for ${backfilled} machines.`);
+  }
+
+  const backfilledLocations = await backfillMachineLocation();
+  if (backfilledLocations > 0) {
+    console.log(`Backfilled geographic coordinates for ${backfilledLocations} machines.`);
   }
 }
 

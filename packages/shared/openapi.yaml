@@ -110,6 +110,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorldSubnetResponse'
 
+  /world/nodes:
+    get:
+      tags: [World]
+      summary: Physical location of all machines in the subnet (public, no ownership info)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Node list with geographic coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldNodesResponse'
+
   /machines/{ipv6}:
     get:
       tags: [World]
@@ -380,9 +394,41 @@ components:
           type: string
           enum: [active, hospital, prison]
 
+    WorldNode:
+      type: object
+      required: [ipv6, osArchetypeId, isLandmark, latitude, longitude]
+      properties:
+        ipv6:
+          type: string
+          example: '2001:db8:1:7::a1'
+        osArchetypeId:
+          type: string
+          enum: [cheap_server, generic_linux, corp_workstation, mainframe]
+        isLandmark:
+          type: boolean
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    WorldNodesResponse:
+      type: object
+      required: [nodes]
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldNode'
+
     MachineFingerprint:
       type: object
-      required: [ipv6, osArchetypeId, securitySummary, isLandmark]
+      required: [ipv6, osArchetypeId, securitySummary, isLandmark, latitude, longitude]
       properties:
         ipv6:
           type: string
@@ -393,6 +439,12 @@ components:
           type: string
         isLandmark:
           type: boolean
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
 
     Machine:
       type: object

@@ -8,6 +8,7 @@
 |------|---------|
 | [`spec/`](spec/) | Game design specification |
 | [`plan/`](plan/) | Implementation stages (start at [plan/00-pre-flight.md](plan/00-pre-flight.md)) |
+| [`docs/`](docs/) | Dev guides and [expansion ideas](docs/ideas/) |
 | [`packages/`](packages/) | TypeScript monorepo — client, auth, game-api, tick-worker, shared |
 | [`content/`](content/) | Game data — tools, archetypes, subnet, balance-v0 placeholders |
 | [`infra/`](infra/) | Docker Compose and deploy manifests |
@@ -20,9 +21,12 @@
 # Install dependencies
 npm install
 
-# Copy env and start Postgres + Redis + services
+# Copy env and start the full local stack (Postgres, Redis, mock API, services, client)
 cp .env.example .env
 npm run dev
+
+# Stop everything (services + Docker containers)
+npm run dev:down
 ```
 
 See [docs/local-development.md](docs/local-development.md) for OAuth setup and dev auth bypass.
@@ -86,3 +90,11 @@ See [spec/17-open-decisions.md](spec/17-open-decisions.md) for the full decision
 | [17-open-decisions](spec/17-open-decisions.md) | Locked technical choices |
 
 Full index in the original spec README section — all docs under [`spec/`](spec/).
+
+## Expansion ideas (post-MVP)
+
+Brainstorm docs for future systems — not current build scope. See [`docs/ideas/`](docs/ideas/):
+
+| Doc | Summary |
+|-----|---------|
+| [Steamer player class](docs/ideas/01-player-classes-steamer.md) | Grow fans who run your software on personal machines to build a fleet; social skillset vs Operator hacking |

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { useWindowManager } from '../hooks/useWindowManager';
 import { useTrace } from '../hooks/useTrace';
 import { FloatingWindow } from './FloatingWindow';
@@ -22,12 +22,25 @@ function fmt(s: number) {
 }
 
 export function AppShell({ account, onLogout }: Props) {
-  const wm = useWindowManager();
+  const [viewport, setViewport] = useState<{ width: number; height: number } | null>(null);
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const wm = useWindowManager(viewport);
   const [traceActive, setTraceActive] = useState(false);
   const [connectTarget, setConnectTarget] = useState<string | undefined>();
   const trace = useTrace(traceActive);
 
   const tickTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+  useEffect(() => {
+    const el = desktopRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setViewport({ width: Math.floor(width), height: Math.floor(height) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const renderWindow = useCallback((component: string) => {
     switch (component) {
@@ -51,7 +64,7 @@ export function AppShell({ account, onLogout }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Desktop */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div ref={desktopRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Background */}
         <DesktopBackground />
 
@@ -60,6 +73,7 @@ export function AppShell({ account, onLogout }: Props) {
           <FloatingWindow
             key={win.id}
             win={win}
+            bounds={viewport ?? { width: 0, height: 0 }}
             isActive={wm.activeId === win.id}
             onFocus={() => wm.focus(win.id)}
             onClose={() => wm.close(win.id)}

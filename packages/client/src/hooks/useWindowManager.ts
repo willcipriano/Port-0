@@ -1,4 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  DEFAULT_WINDOWS,
+  clampRect,
+  fitWindowsToViewport,
+  type Viewport,
+} from '../utils/windowLayout';
 
 export interface WinState {
   id: string;
@@ -18,22 +24,19 @@ export interface WinState {
 
 export type WinPatch = Partial<Pick<WinState, 'x' | 'y' | 'width' | 'height' | 'zIndex' | 'minimized' | 'maximized' | 'closed' | 'restoreRect'>>;
 
-const TASKBAR_H = 44;
-
-const DEFAULT_WINDOWS: WinState[] = [
-  { id: 'world',    title: 'WORLD MAP',          component: 'WorldMap',    x: 10,   y: 10,  width: 400, height: 340, zIndex: 1, minimized: false, maximized: false, closed: false },
-  { id: 'servers',  title: 'SERVER LIST',        component: 'ServerList',  x: 420,  y: 10,  width: 430, height: 340, zIndex: 2, minimized: false, maximized: false, closed: false },
-  { id: 'terminal', title: 'TERMINAL',            component: 'Terminal',    x: 10,   y: 360, width: 490, height: 340, zIndex: 3, minimized: false, maximized: false, closed: false },
-  { id: 'hardware', title: 'HARDWARE // RIG',     component: 'Hardware',    x: 860,  y: 10,  width: 420, height: 460, zIndex: 4, minimized: false, maximized: false, closed: false },
-  { id: 'email',    title: 'EMAIL // CONTRACTS',  component: 'Email',       x: 510,  y: 360, width: 340, height: 340, zIndex: 5, minimized: false, maximized: false, closed: false },
-];
-
 let zTop = 10;
 
-export function useWindowManager() {
+export function useWindowManager(viewport: Viewport | null) {
+  const referenceLayout = useRef(DEFAULT_WINDOWS);
   const [windows, setWindows] = useState<WinState[]>(DEFAULT_WINDOWS);
   const [activeId, setActiveId] = useState<string>('email');
-  const viewportRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!viewport) return;
+    setWindows(prev =>
+      fitWindowsToViewport(prev, referenceLayout.current, viewport.width, viewport.height),
+    );
+  }, [viewport?.width, viewport?.height]);
 
   const update = useCallback((id: string, patch: WinPatch) => {
     setWindows(prev => prev.map(w => w.id === id ? { ...w, ...patch } : w));
@@ -64,29 +67,37 @@ export function useWindowManager() {
   }, []);
 
   const toggleMaximize = useCallback((id: string) => {
+    if (!viewport) return;
     setWindows(prev => prev.map(w => {
       if (w.id !== id) return w;
       if (w.maximized) {
-        return { ...w, maximized: false, ...(w.restoreRect ?? {}) };
+        const restored = { ...w, maximized: false, ...(w.restoreRect ?? {}) };
+        return { ...restored, ...clampRect(restored, viewport.width, viewport.height) };
       }
-      const vw = window.innerWidth;
-      const vh = window.innerHeight - TASKBAR_H;
       return {
         ...w,
         maximized: true,
         restoreRect: { x: w.x, y: w.y, width: w.width, height: w.height },
-        x: 0, y: 0, width: vw, height: vh,
+        x: 0, y: 0, width: viewport.width, height: viewport.height,
       };
     }));
-  }, []);
+  }, [viewport]);
 
   const move = useCallback((id: string, x: number, y: number) => {
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, x, y } : w));
-  }, []);
+    if (!viewport) return;
+    setWindows(prev => prev.map(w => {
+      if (w.id !== id) return w;
+      return { ...w, ...clampRect({ x, y, width: w.width, height: w.height }, viewport.width, viewport.height) };
+    }));
+  }, [viewport]);
 
   const resize = useCallback((id: string, patch: Pick<WinState, 'x' | 'y' | 'width' | 'height'>) => {
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, ...patch } : w));
-  }, []);
+    if (!viewport) return;
+    setWindows(prev => prev.map(w => {
+      if (w.id !== id) return w;
+      return { ...w, ...clampRect({ ...patch }, viewport.width, viewport.height) };
+    }));
+  }, [viewport]);
 
-  return { windows, activeId, focus, close, open, toggleMinimize, toggleMaximize, move, resize, update };
+  return { windows, activeId, viewport, focus, close, open, toggleMinimize, toggleMaximize, move, resize, update };
 }

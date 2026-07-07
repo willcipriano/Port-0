@@ -1,8 +1,10 @@
 import React, { useRef, useCallback } from 'react';
 import type { WinState } from '../hooks/useWindowManager';
+import { clampRect, MIN_W, MIN_H } from '../utils/windowLayout';
 
 interface Props {
   win: WinState;
+  bounds: { width: number; height: number };
   isActive: boolean;
   onFocus: () => void;
   onClose: () => void;
@@ -12,9 +14,6 @@ interface Props {
   onResize: (patch: Pick<WinState, 'x' | 'y' | 'width' | 'height'>) => void;
   children: React.ReactNode;
 }
-
-const MIN_W = 280;
-const MIN_H = 180;
 
 type Dir = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
@@ -34,7 +33,7 @@ const RESIZE_HANDLES: { dir: Dir; style: React.CSSProperties }[] = [
   { dir: 'se', style: { bottom: 0, right: 0,  width: 8,   height: 8, cursor: 'se-resize' } },
 ];
 
-export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, onMaximize, onMove, onResize, children }: Props) {
+export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMinimize, onMaximize, onMove, onResize, children }: Props) {
   const dragging = useRef(false);
   const resizing = useRef(false);
 
@@ -49,8 +48,8 @@ export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, on
 
     const onMove_ = (ev: MouseEvent) => {
       if (!dragging.current) return;
-      const nx = Math.max(0, ev.clientX - ox);
-      const ny = Math.max(0, ev.clientY - oy);
+      const nx = Math.max(0, Math.min(bounds.width - win.width, ev.clientX - ox));
+      const ny = Math.max(0, Math.min(bounds.height - win.height, ev.clientY - oy));
       onMove(nx, ny);
     };
     const onUp = () => {
@@ -60,7 +59,7 @@ export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, on
     };
     window.addEventListener('mousemove', onMove_);
     window.addEventListener('mouseup', onUp);
-  }, [win, onMove]);
+  }, [win, bounds, onMove]);
 
   const startResize = useCallback((dir: Dir) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -83,7 +82,7 @@ export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, on
       if (dir.includes('w')) { w = Math.max(MIN_W, startW - dx); x = startX + (startW - w); }
       if (dir.includes('n')) { h = Math.max(MIN_H, startH - dy); y = startY + (startH - h); }
 
-      onResize({ x, y, width: w, height: h });
+      onResize(clampRect({ x, y, width: w, height: h }, bounds.width, bounds.height));
     };
 
     const onUp = () => {
@@ -94,7 +93,7 @@ export function FloatingWindow({ win, isActive, onFocus, onClose, onMinimize, on
 
     window.addEventListener('mousemove', onMove_);
     window.addEventListener('mouseup', onUp);
-  }, [win, onResize]);
+  }, [win, bounds, onResize]);
 
   return (
     <div

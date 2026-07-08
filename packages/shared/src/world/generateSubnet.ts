@@ -11,6 +11,7 @@ import {
 } from './procGenConfig.js';
 import { DEFAULT_WORLD_SEED } from './procGenConfig.js';
 import { createRng, type Rng } from './rng.js';
+import { generateRootPassword } from './generatePassword.js';
 
 export interface GeneratedMachine {
   ipv6: string;
@@ -19,6 +20,7 @@ export interface GeneratedMachine {
   resources: MachineResources;
   isLandmark: boolean;
   landmarkId?: string;
+  rootPassword: string;
   /** Physical geographic location — independent of subnet / IPv6 address */
   latitude: number;
   longitude: number;
@@ -125,10 +127,12 @@ function buildLandmarkMachine(
     landmark.latitude !== undefined && landmark.longitude !== undefined
       ? { latitude: landmark.latitude, longitude: landmark.longitude }
       : rollLocation(rng);
+  const securityComponents = securityFromArchetype(archetype);
   return {
     ipv6: landmark.ipv6.toLowerCase(),
     osArchetypeId: landmark.os_archetype_id,
-    securityComponents: securityFromArchetype(archetype),
+    securityComponents,
+    rootPassword: generateRootPassword(rng, securityComponents.password),
     resources: {
       cpu: RESOURCE_RANGES[landmark.os_archetype_id].cpu[1],
       ram: RESOURCE_RANGES[landmark.os_archetype_id].ram[1],
@@ -153,10 +157,12 @@ function buildProcGenMachine(
   }
   // Roll location after archetype/security so physical coords are independent
   const location = rollLocation(rng);
+  const securityComponents = rollSecurity(rng, archetype);
   return {
     ipv6: allocator.allocateNext().toLowerCase(),
     osArchetypeId,
-    securityComponents: rollSecurity(rng, archetype),
+    securityComponents,
+    rootPassword: generateRootPassword(rng, securityComponents.password),
     resources: rollResources(rng, osArchetypeId),
     isLandmark: false,
     ...location,

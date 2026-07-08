@@ -14,6 +14,8 @@ import {
   getScan,
   getFleetResponse,
   listIntel,
+  listSavedRootPasswords,
+  deleteSavedRootPassword,
   listMarketCatalog,
   listTickSummariesSince,
   listVirusInventory,
@@ -128,8 +130,10 @@ app.get('/world/nodes', bearerAuthMiddleware, requireAction('read_only'), async 
     is_landmark: boolean;
     latitude: number | null;
     longitude: number | null;
+    password_level: number | null;
   }>(
-    `SELECT ipv6, os_archetype_id, is_landmark, latitude, longitude
+    `SELECT ipv6, os_archetype_id, is_landmark, latitude, longitude,
+            (security_components->>'password')::int AS password_level
      FROM machines
      ORDER BY is_landmark DESC, ipv6 ASC`,
   );
@@ -140,6 +144,7 @@ app.get('/world/nodes', bearerAuthMiddleware, requireAction('read_only'), async 
       isLandmark: row.is_landmark,
       latitude: row.latitude ?? 0,
       longitude: row.longitude ?? 0,
+      passwordLevel: row.password_level ?? 1,
     })),
   });
 });
@@ -229,6 +234,17 @@ app.patch(
 app.get('/intel', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
   const intel = await listIntel(getAccountId(c));
   return c.json({ intel });
+});
+
+app.get('/passwords', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const passwords = await listSavedRootPasswords(getAccountId(c));
+  return c.json({ passwords });
+});
+
+app.delete('/passwords/:ipv6', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const deleted = await deleteSavedRootPassword(getAccountId(c), c.req.param('ipv6'));
+  if (!deleted) throw new ApiError(404, 'not_found', 'Password entry not found');
+  return c.json({ ok: true });
 });
 
 const declareSiegeSchema = z.object({

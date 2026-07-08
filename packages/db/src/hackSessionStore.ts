@@ -39,7 +39,13 @@ export async function getActiveSessionId(accountId: string): Promise<string | nu
 export async function getActiveSession(accountId: string): Promise<HackSessionState | null> {
   const sessionId = await getActiveSessionId(accountId);
   if (!sessionId) return null;
-  return loadHackSession(sessionId);
+  const session = await loadHackSession(sessionId);
+  if (!session) {
+    const redis = await connectRedis();
+    await redis.del(accountSessionKey(accountId));
+    return null;
+  }
+  return session;
 }
 
 export function createSessionId(): string {

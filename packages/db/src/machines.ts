@@ -1,5 +1,5 @@
 import type { SecurityComponents } from '@port0/shared';
-import { factionFromArchetype, defaultFilesystem, createRng, GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT } from '@port0/shared';
+import { factionFromArchetype, defaultFilesystem, createRng, GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT, deriveRootPasswordFromIpv6 } from '@port0/shared';
 import type { GeneratedMachine } from '@port0/shared';
 import type { PoolClient } from 'pg';
 import { getPool } from './pool.js';
@@ -162,7 +162,7 @@ export async function getDefaultSubnetId(): Promise<string | null> {
 
 export async function insertMachineRow(client: PoolClient, machine: GeneratedMachine): Promise<void> {
   const faction = factionFromArchetype(machine.osArchetypeId);
-  const filesystem = defaultFilesystem(machine.osArchetypeId);
+  const filesystem = defaultFilesystem(machine.osArchetypeId, machine.rootPassword);
   await client.query(
     `INSERT INTO machines (
        ipv6, os_archetype_id, is_landmark, landmark_id,
@@ -248,6 +248,40 @@ export async function backfillMachineLocation(): Promise<number> {
     await pool.query(
       `UPDATE machines SET latitude = $2, longitude = $3 WHERE id = $1`,
       [row.id, latitude, longitude],
+    );
+    updated += 1;
+  }
+  return updated;
+}
+
+export async function backfillMachinePasswords(options?: { regenerateAll?: boolean }): Promise<number> {
+  const pool = getPool();
+  const result = await pool.query<{
+    id: string;
+    ipv6: string;
+    os_archetype_id: string;
+    security_components: SecurityComponents | null;
+    filesystem: Record<string, unknown>;
+  }>(
+    options?.regenerateAll
+      ? `SELECT id, ipv6, os_archetype_id, security_components, filesystem FROM machines`
+      : `SELECT id, ipv6, os_archetype_id, security_components, filesystem
+         FROM machines
+         WHERE filesystem->'credentials'->>'root_password' IS NULL
+            OR filesystem->'credentials' IS NULL`,
+  );
+  let updated = 0;
+  for (const row of result.rows) {
+    const level = row.security_components?.password
+      ?? (row.os_archetype_id === 'cheap_server' ? 1 : row.os_archetype_id === 'generic_linux' ? 2 : 3);
+    const password = deriveRootPasswordFromIpv6(row.ipv6, level);
+    const filesystem = {
+      ...(row.filesystem ?? {}),
+      credentials: { root_password: password },
+    };
+    await pool.query(
+      `UPDATE machines SET filesystem = $2::jsonb WHERE id = $1`,
+      [row.id, JSON.stringify(filesystem)],
     );
     updated += 1;
   }

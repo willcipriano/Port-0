@@ -22,6 +22,7 @@ export interface TargetMachineContext {
   faction: TargetFaction;
   alarmActive: boolean;
   isLandmark: boolean;
+  rootPassword: string;
 }
 
 export interface RunningToolState {
@@ -98,14 +99,15 @@ export type SessionClientMessage =
 
 export type SessionServerMessage =
   | { type: 'session_ready'; accountId: string }
-  | { type: 'session_started'; sessionId: string; prompt: string; accessLevel: ShellAccessLevel; tracing: boolean; traceExpiresAt?: string }
+  | { type: 'session_started'; sessionId: string; prompt: string; accessLevel: ShellAccessLevel; tracing: boolean; traceExpiresAt?: string; targetPasswordLevel?: number }
   | { type: 'shell_output'; output: string }
-  | { type: 'tool_started'; runId: string; toolId: string; durationSeconds: number }
-  | { type: 'tool_progress'; runId: string; toolId: string; progressPercent: number }
+  | { type: 'tool_started'; runId: string; toolId: string; durationSeconds: number; passwordLength?: number }
+  | { type: 'tool_progress'; runId: string; toolId: string; progressPercent: number; revealedPrefix?: string }
   | { type: 'tool_completed'; runId: string; toolId: string; output: string }
+  | { type: 'password_saved'; targetIpv6: string }
   | { type: 'tool_cancelled'; runId: string; toolId: string }
   | { type: 'trace_update'; tracing: boolean; progressSeconds: number; expiresAt: string | null; remainingSeconds: number }
-  | { type: 'task_manager'; cpuUsed: number; cpuTotal: number; ramUsed: number; ramTotal: number; runningTools: Array<{ runId: string; toolId: string; progressPercent: number }> }
+  | { type: 'task_manager'; cpuUsed: number; cpuTotal: number; ramUsed: number; ramTotal: number; runningTools: Array<{ runId: string; toolId: string; progressPercent: number; revealedPrefix?: string }> }
   | { type: 'claim_result'; success: boolean; ipv6?: string; message: string }
   | { type: 'session_ended'; reason: string; message?: string }
   | { type: 'caught'; punishment: 'hospital' | 'prison'; message: string; statusExpiresAt: string }

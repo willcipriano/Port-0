@@ -21,3 +21,11 @@ export {
 } from './procGenConfig.js';
 export { createRng, type Rng } from './rng.js';
 export { GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT, type GeoAnchor } from './geoAnchors.js';
+export {
+  generateRootPassword,
+  deriveRootPasswordFromIpv6,
+} from './generatePassword.js';
+export {
+  passwordLevelSummary,
+  mockPasswordLevelForNode,
+} from './passwordLevelLabel.js';

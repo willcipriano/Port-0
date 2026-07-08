@@ -14,9 +14,7 @@ import {
   canAffordTool,
   computeResourceUsage,
   computeToolDurationMs,
-  entryRequiresImmediateTrace,
   findTool,
-  shouldTriggerAlarmOnConnect,
   targetComponentLevel,
   toolOwned,
   toolProgressPercent,
@@ -31,6 +29,8 @@ import {
   traceProgressSeconds,
   traceRemainingSeconds,
 } from './trace.js';
+import { rollTraceProbe } from './traceProbe.js';
+import { computeCrackerRevealedPrefix } from './crackerReveal.js';
 
 let traceBalanceCache: TraceBalance | null = null;
 
@@ -62,11 +62,20 @@ function taskManagerMessage(session: HackSessionState): SessionServerMessage {
     ramTotal: session.rigRam,
     runningTools: session.runningTools
       .filter((r) => !r.completed && !r.cancelled)
-      .map((r) => ({
-        runId: r.runId,
-        toolId: r.toolId,
-        progressPercent: toolProgressPercent(r),
-      })),
+      .map((r) => {
+        const entry: { runId: string; toolId: string; progressPercent: number; revealedPrefix?: string } = {
+          runId: r.runId,
+          toolId: r.toolId,
+          progressPercent: toolProgressPercent(r),
+        };
+        if (r.category === 'cracker') {
+          entry.revealedPrefix = computeCrackerRevealedPrefix(
+            session.target.rootPassword,
+            entry.progressPercent,
+          );
+        }
+        return entry;
+      }),
   };
 }
 
@@ -100,6 +109,16 @@ function triggerAlarm(session: HackSessionState, nowMs: number, balance: TraceBa
   );
   session.traceExpiresAtMs = nowMs + durationMs;
   logCommand(session, 'alarm', 'trace_started');
+}
+
+function cancelAllRunningTools(session: HackSessionState): SessionServerMessage[] {
+  const messages: SessionServerMessage[] = [];
+  for (const run of session.runningTools) {
+    if (run.completed || run.cancelled) continue;
+    run.cancelled = true;
+    messages.push({ type: 'tool_cancelled', runId: run.runId, toolId: run.toolId });
+  }
+  return messages;
 }
 
 export interface ConnectResult extends SessionEvent {
@@ -137,13 +156,6 @@ export function connectSession(input: ConnectInput, balance = getTraceBalance())
 
   const messages: SessionServerMessage[] = [];
 
-  if (
-    shouldTriggerAlarmOnConnect(input.target.securityComponents.alarm) &&
-    entryRequiresImmediateTrace(input.target.osArchetypeId, input.target.securityComponents.alarm)
-  ) {
-    triggerAlarm(session, input.nowMs, balance);
-  }
-
   messages.push({
     type: 'session_started',
     sessionId: session.id,
@@ -153,6 +165,7 @@ export function connectSession(input: ConnectInput, balance = getTraceBalance())
     traceExpiresAt: session.traceExpiresAtMs
       ? new Date(session.traceExpiresAtMs).toISOString()
       : undefined,
+    targetPasswordLevel: session.target.securityComponents.password,
   });
   messages.push(traceUpdateMessage(session, input.nowMs));
   messages.push(taskManagerMessage(session));
@@ -165,6 +178,7 @@ export function tickSession(
   nowMs: number,
   tools: Tool[],
   balance = getTraceBalance(),
+  rng: () => number = Math.random,
 ): SessionEvent {
   const messages: SessionServerMessage[] = [];
   const deltaMs = Math.max(0, nowMs - session.lastTickMs);
@@ -180,15 +194,29 @@ export function tickSession(
 
   advanceRunningTools(session, deltaMs, session.rigCpu);
 
+  if (rollTraceProbe(session, balance, rng)) {
+    triggerAlarm(session, nowMs, balance);
+    messages.push(traceUpdateMessage(session, nowMs));
+  }
+
   for (const run of session.runningTools) {
     if (run.cancelled) continue;
     if (!run.completed) {
-      messages.push({
+      const progressPercent = toolProgressPercent(run);
+      const tool = findTool(tools, run.toolId);
+      const progressMsg: SessionServerMessage = {
         type: 'tool_progress',
         runId: run.runId,
         toolId: run.toolId,
-        progressPercent: toolProgressPercent(run),
-      });
+        progressPercent,
+      };
+      if (tool?.category === 'cracker') {
+        progressMsg.revealedPrefix = computeCrackerRevealedPrefix(
+          session.target.rootPassword,
+          progressPercent,
+        );
+      }
+      messages.push(progressMsg);
       continue;
     }
     if (run.effectApplied) continue;
@@ -206,12 +234,6 @@ export function tickSession(
         nowMs,
       );
     }
-    if (tool.category === 'cracker' || tool.category === 'port_opener') {
-      if (!session.tracing && session.target.alarmActive && !session.alarmDisabled) {
-        triggerAlarm(session, nowMs, balance);
-        messages.push(traceUpdateMessage(session, nowMs));
-      }
-    }
 
     updateAccessLifecycle(session);
     messages.push({
@@ -228,6 +250,10 @@ export function tickSession(
   messages.push(taskManagerMessage(session));
 
   if (session.tracing && isTraceExpired(session.traceExpiresAtMs, nowMs)) {
+    messages.push(...cancelAllRunningTools(session));
+    session.rigCpuUsed = 0;
+    session.rigRamUsed = 0;
+    messages.push(taskManagerMessage(session));
     session.lifecycle = 'caught';
     logCommand(session, 'caught', 'trace_expired');
     return { messages, ended: true, caught: true };
@@ -374,7 +400,10 @@ export function handleRunTool(
   }
 
   const targetLevel = tool.category === 'trace_blocker' ? 1 : targetComponentLevel(session, tool);
-  const durationMs = computeToolDurationMs(tool, targetLevel);
+  let durationMs = computeToolDurationMs(tool, targetLevel);
+  if (tool.category === 'cracker') {
+    durationMs = Math.max(durationMs, session.target.rootPassword.length * 350);
+  }
   const run = {
     runId: randomUUID(),
     toolId: tool.id,
@@ -390,23 +419,18 @@ export function handleRunTool(
   };
   session.runningTools.push(run);
 
-  if (
-    (tool.category === 'cracker' || tool.category === 'port_opener') &&
-    !session.tracing &&
-    session.target.alarmActive &&
-    !session.alarmDisabled
-  ) {
-    triggerAlarm(session, nowMs, balance);
-  }
-
   logCommand(session, 'run_tool', toolId);
+  const toolStarted: SessionServerMessage = {
+    type: 'tool_started',
+    runId: run.runId,
+    toolId: tool.id,
+    durationSeconds: Math.ceil(durationMs / 1000),
+  };
+  if (tool.category === 'cracker') {
+    toolStarted.passwordLength = session.target.rootPassword.length;
+  }
   const messages: SessionServerMessage[] = [
-    {
-      type: 'tool_started',
-      runId: run.runId,
-      toolId: tool.id,
-      durationSeconds: Math.ceil(durationMs / 1000),
-    },
+    toolStarted,
     taskManagerMessage(session),
   ];
   if (session.tracing) {

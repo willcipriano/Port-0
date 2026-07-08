@@ -21,6 +21,8 @@ export interface TraceBalance {
     confiscateIllegalOnPrison: boolean;
   };
   illegalToolCategories: ToolCategory[];
+  probeBasePerTick: number;
+  probeAlarmLevelMultiplier: number;
 }
 
 function loadJson(path: string): unknown {
@@ -62,6 +64,8 @@ export function loadTraceBalance(root = worldContentRoot()): TraceBalance {
       'trace_blocker',
       'log_cleaner',
     ],
+    probeBasePerTick: Number(raw.probe_base_per_tick ?? 0.02),
+    probeAlarmLevelMultiplier: Number(raw.probe_alarm_level_multiplier ?? 0.25),
   };
 }
 

@@ -156,8 +156,12 @@ function findNearestNode(
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
-export function WorldMap() {
-  const { get } = useApi();
+interface WorldMapProps {
+  accountId: string;
+}
+
+export function WorldMap({ accountId }: WorldMapProps) {
+  const { get } = useApi(accountId);
   const [subnet, setSubnet] = useState<SubnetInfo | null>(null);
   const [heat, setHeat] = useState(0);
   const [scanning, setScanning] = useState(false);
@@ -176,7 +180,7 @@ export function WorldMap() {
   const sizeRef = useRef({ w: 0, h: 0 });
 
   // Map data
-  const { topology, nodes, loading: nodesLoading } = useWorldMap(scanRefreshKey);
+  const { topology, nodes, loading: nodesLoading } = useWorldMap(accountId, scanRefreshKey);
 
   // Pre-compute GeoJSON from topology
   const [countries, setCountries] = useState<GeoJSON.FeatureCollection | null>(null);

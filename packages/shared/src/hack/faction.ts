@@ -16,16 +16,21 @@ export function punishmentForFaction(faction: TargetFaction): 'hospital' | 'pris
   return faction === 'government' ? 'prison' : 'hospital';
 }
 
-export function defaultFilesystem(osArchetypeId: string): Record<string, unknown> {
+export function defaultFilesystem(
+  osArchetypeId: string,
+  rootPassword?: string,
+): Record<string, unknown> {
   const base = {
     motd: 'Welcome.',
     files: [] as string[],
+    credentials: rootPassword ? { root_password: rootPassword } : undefined,
   };
   if (osArchetypeId === 'cheap_server') {
     return {
       ...base,
       motd: 'CheapServer OS 1.0 — "Security through simplicity"',
       files: ['credentials.txt', 'payroll.csv', 'source.zip'],
+      credentials: { root_password: rootPassword ?? 'guest' },
     };
   }
   if (osArchetypeId === 'corp_workstation') {
@@ -33,10 +38,21 @@ export function defaultFilesystem(osArchetypeId: string): Record<string, unknown
       ...base,
       motd: 'Corp Workstation — authorized access only',
       files: ['audit.log', 'credentials.db', 'finance_report.xlsx'],
+      credentials: { root_password: rootPassword ?? 'admin' },
     };
   }
   return {
     ...base,
     files: ['notes.txt', 'config.bak'],
+    credentials: { root_password: rootPassword ?? 'root' },
   };
+}
+
+export function readRootPasswordFromFilesystem(filesystem: Record<string, unknown>): string {
+  const creds = filesystem.credentials;
+  if (creds && typeof creds === 'object' && creds !== null && 'root_password' in creds) {
+    const pw = (creds as { root_password?: unknown }).root_password;
+    if (typeof pw === 'string' && pw.length > 0) return pw;
+  }
+  return 'changeme';
 }

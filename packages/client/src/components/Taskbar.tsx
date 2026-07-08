@@ -1,21 +1,11 @@
 import { useState } from 'react';
 import type { WinState } from '../hooks/useWindowManager';
+import { StartMenu } from './StartMenu';
+import { APP_REGISTRY } from '../apps/registry';
+import type { ToolRegistryKey } from '../tools/registry';
 
-export interface AppDef {
-  id: string;
-  title: string;
-  shortTitle: string;
-  icon: string;
-  description: string;
-}
-
-export const APP_REGISTRY: AppDef[] = [
-  { id: 'world',    title: 'WORLD MAP',         shortTitle: 'WORLD',    icon: '[MAP]', description: 'Subnet topology & scan targets' },
-  { id: 'servers',  title: 'SERVER LIST',        shortTitle: 'SERVERS',  icon: '[SRV]', description: 'Discovered & owned machines' },
-  { id: 'terminal', title: 'TERMINAL',            shortTitle: 'TERM',     icon: '[>_ ]', description: 'Remote shell session' },
-  { id: 'hardware', title: 'HARDWARE // RIG',     shortTitle: 'RIG',      icon: '[CPU]', description: 'Rig stats & process manager' },
-  { id: 'email',    title: 'EMAIL // CONTRACTS',  shortTitle: 'EMAIL',    icon: '[MSG]', description: 'NPC jobs & contract inbox' },
-];
+export { APP_REGISTRY };
+export type { AppDef } from '../apps/registry';
 
 interface Props {
   windows: WinState[];
@@ -30,12 +20,16 @@ interface Props {
   tickTime: string;
   traceCountdown: string;
   traceLevel: string;
+  connected: boolean;
+  onLaunchTool: (key: ToolRegistryKey) => void;
+  tracedToolIds: Set<string>;
 }
 
 export function Taskbar({
   windows, onOpen, onFocus, onToggleMinimize,
   tracePercent, traceActive, displayHandle, balance, onLogout,
   tickTime, traceCountdown, traceLevel,
+  connected, onLaunchTool, tracedToolIds,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -63,147 +57,17 @@ export function Taskbar({
           />
 
           {/* Menu panel */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '320px',
-            background: 'rgba(8,12,18,0.97)',
-            border: '1px solid var(--border-bright)',
-            borderBottom: 'none',
-            borderRadius: '4px 4px 0 0',
-            pointerEvents: 'all',
-            animation: 'slide-in-left 0.15s ease',
-            boxShadow: '0 -4px 32px rgba(0,229,255,0.1)',
-            overflow: 'hidden',
-          }}>
-            {/* Menu header */}
-            <div style={{
-              padding: '10px 14px',
-              borderBottom: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              background: 'var(--bg-panel-3)',
-            }}>
-              <div style={{
-                width: '28px', height: '28px',
-                background: 'rgba(0,229,255,0.1)',
-                border: '1px solid var(--accent-cyan)44',
-                borderRadius: '2px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '10px', color: 'var(--accent-cyan)',
-                textShadow: 'var(--glow-cyan)', fontWeight: 700,
-              }}>P:0</div>
-              <div>
-                <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, letterSpacing: '0.1em' }}>
-                  {displayHandle || 'OPERATOR'}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-                  ₿{balance.toLocaleString()} · ACTIVE
-                </div>
-              </div>
-            </div>
-
-            {/* Section label */}
-            <div style={{ padding: '8px 14px 4px', fontSize: '9px', color: 'var(--text-dim)', letterSpacing: '0.18em', fontWeight: 700, textTransform: 'uppercase' }}>
-              Applications
-            </div>
-
-            {/* App grid */}
-            <div style={{ padding: '4px 8px 8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {APP_REGISTRY.map(app => {
-                const win = windows.find(w => w.id === app.id);
-                const isOpen = win && !win.closed && !win.minimized;
-                return (
-                  <button
-                    key={app.id}
-                    onClick={() => {
-                      if (win) {
-                        if (win.closed || win.minimized) onOpen(app.id);
-                        else onFocus(app.id);
-                      } else {
-                        onOpen(app.id);
-                      }
-                      setMenuOpen(false);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '7px 8px',
-                      background: isOpen ? 'rgba(0,229,255,0.06)' : 'transparent',
-                      border: '1px solid transparent',
-                      borderRadius: '2px',
-                      cursor: 'pointer',
-                      width: '100%',
-                      textAlign: 'left',
-                      transition: 'all 0.1s',
-                      fontFamily: 'var(--font-mono)',
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.background = 'rgba(0,229,255,0.08)';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.background = isOpen ? 'rgba(0,229,255,0.06)' : 'transparent';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
-                    }}
-                  >
-                    <span style={{
-                      width: '36px',
-                      fontSize: '9px',
-                      color: isOpen ? 'var(--accent-cyan)' : 'var(--text-muted)',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      flexShrink: 0,
-                      textShadow: isOpen ? 'var(--glow-cyan)' : 'none',
-                    }}>
-                      {app.icon}
-                    </span>
-                    <div>
-                      <div style={{ fontSize: '11px', color: isOpen ? 'var(--text-bright)' : 'var(--text-primary)', fontWeight: isOpen ? 600 : 400, letterSpacing: '0.08em' }}>
-                        {app.title}
-                      </div>
-                      <div style={{ fontSize: '9px', color: 'var(--text-dim)', letterSpacing: '0.04em', marginTop: '1px' }}>
-                        {app.description}
-                      </div>
-                    </div>
-                    {isOpen && (
-                      <div style={{
-                        marginLeft: 'auto',
-                        width: '5px', height: '5px',
-                        borderRadius: '50%',
-                        background: 'var(--accent-cyan)',
-                        boxShadow: 'var(--glow-cyan)',
-                        flexShrink: 0,
-                      }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Divider + system actions */}
-            <div style={{ borderTop: '1px solid var(--border)', padding: '6px 8px' }}>
-              <button
-                onClick={() => { setMenuOpen(false); onLogout(); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '6px 8px', width: '100%', textAlign: 'left',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  fontFamily: 'var(--font-mono)', fontSize: '10px',
-                  color: 'var(--accent-red)', letterSpacing: '0.12em',
-                  transition: 'all 0.1s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,34,68,0.08)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ textShadow: 'var(--glow-red)' }}>✕</span>
-                DISCONNECT SESSION
-              </button>
-            </div>
-          </div>
+          <StartMenu
+            windows={windows}
+            displayHandle={displayHandle}
+            balance={balance}
+            connected={connected}
+            onOpen={onOpen}
+            onFocus={onFocus}
+            onLaunchTool={onLaunchTool}
+            onCloseMenu={() => setMenuOpen(false)}
+            onLogout={onLogout}
+          />
         </div>
       )}
 
@@ -263,6 +127,8 @@ export function Taskbar({
           {windows.filter(win => !win.closed).map(win => {
             const app = APP_REGISTRY.find(a => a.id === win.id);
             const isActive = !win.minimized;
+            const label = app?.shortTitle ?? win.title.split('//')[0]?.trim().slice(0, 8) ?? win.title;
+            const traceSource = Boolean(win.toolId && tracedToolIds.has(win.toolId));
             return (
               <button
                 key={win.id}
@@ -270,16 +136,21 @@ export function Taskbar({
                 style={{
                   height: '28px',
                   padding: '0 10px',
-                  background: isActive ? 'rgba(0,229,255,0.08)' : 'transparent',
-                  border: `1px solid ${isActive ? 'var(--accent-cyan)44' : 'var(--border)'}`,
+                  background: traceSource
+                    ? 'rgba(0,229,255,0.15)'
+                    : isActive ? 'rgba(0,229,255,0.08)' : 'transparent',
+                  border: traceSource
+                    ? '1px solid var(--accent-cyan)'
+                    : `1px solid ${isActive ? 'var(--accent-cyan)44' : 'var(--border)'}`,
                   borderRadius: '2px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '9px',
                   fontWeight: 700,
                   letterSpacing: '0.12em',
-                  color: isActive ? 'var(--accent-cyan)' : 'var(--text-dim)',
-                  textShadow: isActive ? 'var(--glow-cyan)' : 'none',
+                  color: traceSource || isActive ? 'var(--accent-cyan)' : 'var(--text-dim)',
+                  textShadow: traceSource || isActive ? 'var(--glow-cyan)' : 'none',
+                  boxShadow: traceSource ? 'var(--glow-cyan)' : 'none',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.1s',
                   flexShrink: 0,
@@ -291,7 +162,7 @@ export function Taskbar({
                   if (!isActive) (e.currentTarget.style.color = 'var(--text-dim)');
                 }}
               >
-                {app?.shortTitle ?? win.title}
+                {label}
               </button>
             );
           })}

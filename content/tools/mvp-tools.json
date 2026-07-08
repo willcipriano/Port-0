@@ -20,7 +20,7 @@
       "max_security_level": 1,
       "ram_cost": 2,
       "cpu_cost": 2,
-      "duration_seconds": 30,
+      "duration_seconds": 12,
       "target_type": "password",
       "market_price": 75,
       "description": "Defeat Password L1 protection during hack session."

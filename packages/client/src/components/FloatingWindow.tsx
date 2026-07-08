@@ -6,6 +6,7 @@ interface Props {
   win: WinState;
   bounds: { width: number; height: number };
   isActive: boolean;
+  traceGlow?: boolean;
   onFocus: () => void;
   onClose: () => void;
   onMinimize: () => void;
@@ -33,7 +34,7 @@ const RESIZE_HANDLES: { dir: Dir; style: React.CSSProperties }[] = [
   { dir: 'se', style: { bottom: 0, right: 0,  width: 8,   height: 8, cursor: 'se-resize' } },
 ];
 
-export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMinimize, onMaximize, onMove, onResize, children }: Props) {
+export function FloatingWindow({ win, bounds, isActive, traceGlow = false, onFocus, onClose, onMinimize, onMaximize, onMove, onResize, children }: Props) {
   const dragging = useRef(false);
   const resizing = useRef(false);
 
@@ -95,6 +96,8 @@ export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMini
     window.addEventListener('mouseup', onUp);
   }, [win, bounds, onResize]);
 
+  const highlighted = traceGlow || isActive;
+
   return (
     <div
       onMouseDown={onFocus}
@@ -108,14 +111,18 @@ export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMini
         flexDirection: 'column',
         zIndex: win.zIndex,
         background: 'var(--bg-panel)',
-        border: isActive ? '1px solid var(--accent-cyan)66' : '1px solid var(--border)',
+        border: traceGlow
+          ? '1px solid var(--accent-cyan)'
+          : isActive ? '1px solid var(--accent-cyan)66' : '1px solid var(--border)',
         borderRadius: '3px',
-        boxShadow: isActive
-          ? `0 0 0 1px rgba(0,229,255,0.15), 0 12px 40px rgba(0,0,0,0.7), 0 0 32px rgba(0,229,255,0.08)`
-          : `0 4px 20px rgba(0,0,0,0.5)`,
+        boxShadow: traceGlow
+          ? 'var(--glow-cyan), 0 12px 40px rgba(0,0,0,0.7), 0 0 32px rgba(0,229,255,0.12)'
+          : isActive
+            ? `0 0 0 1px rgba(0,229,255,0.15), 0 12px 40px rgba(0,0,0,0.7), 0 0 32px rgba(0,229,255,0.08)`
+            : `0 4px 20px rgba(0,0,0,0.5)`,
         overflow: 'hidden',
         userSelect: dragging.current ? 'none' : 'auto',
-        transition: win.maximized ? 'left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease' : 'none',
+        transition: win.maximized ? 'left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease' : 'box-shadow 0.25s ease, border-color 0.25s ease',
       }}
     >
       {/* Resize handles */}
@@ -153,8 +160,8 @@ export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMini
         <div style={{
           width: '2px',
           height: '14px',
-          background: isActive ? 'var(--accent-cyan)' : 'var(--text-dim)',
-          boxShadow: isActive ? 'var(--glow-cyan)' : 'none',
+          background: highlighted ? 'var(--accent-cyan)' : 'var(--text-dim)',
+          boxShadow: highlighted ? 'var(--glow-cyan)' : 'none',
           marginRight: '8px',
           flexShrink: 0,
         }} />
@@ -166,8 +173,8 @@ export function FloatingWindow({ win, bounds, isActive, onFocus, onClose, onMini
           fontWeight: 700,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: isActive ? 'var(--accent-cyan)' : 'var(--text-dim)',
-          textShadow: isActive ? 'var(--glow-cyan)' : 'none',
+          color: highlighted ? 'var(--accent-cyan)' : 'var(--text-dim)',
+          textShadow: highlighted ? 'var(--glow-cyan)' : 'none',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',

@@ -18,6 +18,7 @@ export {
   getDefaultSubnetId,
   backfillMachineSecurity,
   backfillMachineLocation,
+  backfillMachinePasswords,
   getMachineOwner,
   transferMachineOwnership,
   type DbMachine,
@@ -75,6 +76,8 @@ export { listFleetMachines, getFleetResponse, updateFleetRole, toRigResponse, se
 export type { FleetMachine, FleetRole, FleetAggregates, FleetResponse } from './fleet.js';
 export { storeIntel, listIntel, hasIntelOnTarget } from './intel.js';
 export type { IntelEntry } from './intel.js';
+export { storeSavedRootPassword, listSavedRootPasswords, deleteSavedRootPassword } from './savedRootPasswords.js';
+export type { SavedRootPasswordEntry } from './savedRootPasswords.js';
 export {
   declareSiege,
   getSiege,

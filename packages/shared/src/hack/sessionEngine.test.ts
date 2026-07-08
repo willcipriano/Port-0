@@ -6,7 +6,6 @@ import {
   handleShellCommand,
   handleClaim,
   advanceSessionTime,
-  tickSession,
   resetTraceBalanceCache,
   type HackSessionState,
   type TargetMachineContext,
@@ -31,6 +30,7 @@ function makeTarget(overrides: Partial<TargetMachineContext> = {}): TargetMachin
     faction: 'government',
     alarmActive: true,
     isLandmark: false,
+    rootPassword: 'h4ckm3',
     ...overrides,
   };
 }
@@ -50,15 +50,19 @@ function connect(target: TargetMachineContext, nowMs = 1_000_000): HackSessionSt
   ).state;
 }
 
+function triggerTrace(session: HackSessionState, nowMs = session.lastTickMs + 1_000): void {
+  tickSession(session, nowMs, tools, balance, () => 0);
+}
+
 describe('hack session engine', () => {
   beforeEach(() => {
     resetTraceBalanceCache();
   });
 
-  it('starts tracing immediately on hardened entry points', () => {
+  it('does not trace immediately on connect', () => {
     const session = connect(makeTarget());
-    expect(session.tracing).toBe(true);
-    expect(session.lifecycle).toBe('tracing');
+    expect(session.tracing).toBe(false);
+    expect(session.lifecycle).toBe('connected');
   });
 
   it('rejects insufficient tool level', () => {
@@ -82,7 +86,7 @@ describe('hack session engine', () => {
     session.rigRam = 4;
     handleRunTool(session, 'cracker_l1', tools, session.createdAtMs, balance);
     handleRunTool(session, 'port_opener_l1', tools, session.createdAtMs + 1, balance);
-    const third = handleRunTool(session, 'trace_blocker_l1', tools, session.createdAtMs + 2, balance);
+    const third = handleRunTool(session, 'log_cleaner_l1', tools, session.createdAtMs + 2, balance);
     expect(third.messages[0]).toMatchObject({
       type: 'error',
       code: 'insufficient_resources',
@@ -116,6 +120,7 @@ describe('hack session engine', () => {
       }),
     );
     handleRunTool(session, 'cracker_l1', tools, session.createdAtMs, balance);
+    triggerTrace(session);
     const blocker = handleRunTool(session, 'trace_blocker_l1', tools, session.createdAtMs + 1, balance);
     expect(blocker.messages[0]?.type).toBe('tool_started');
     expect(session.tracing).toBe(true);
@@ -137,6 +142,7 @@ describe('hack session engine', () => {
     expect(session.tracing).toBe(false);
 
     handleRunTool(session, 'cracker_l1', tools, session.createdAtMs, balance);
+    triggerTrace(session);
     expect(session.tracing).toBe(true);
     const initialExpiry = session.traceExpiresAtMs!;
 
@@ -160,6 +166,8 @@ describe('hack session engine', () => {
 
   it('trace expiry marks session caught', () => {
     const session = connect(makeTarget({ faction: 'shady' }));
+    handleRunTool(session, 'cracker_l1', tools, session.createdAtMs, balance);
+    triggerTrace(session);
     const result = tickSession(session, session.traceExpiresAtMs! + 1, tools, balance);
     expect(result.caught).toBe(true);
     expect(session.lifecycle).toBe('caught');
@@ -180,9 +188,13 @@ describe('hack session engine', () => {
 });
 
 describe('trace balance', () => {
-  it('government targets trace faster than shady', () => {
+  it('government targets trace faster than shady once probe triggers', () => {
     const shady = connect(makeTarget({ faction: 'shady', securityComponents: { password: 1, firewall: 1, alarm: 2, encryption: 0, antivirus: 0 } }));
     const gov = connect(makeTarget({ faction: 'government' }));
+    handleRunTool(shady, 'cracker_l1', tools, shady.createdAtMs, balance);
+    handleRunTool(gov, 'cracker_l1', tools, gov.createdAtMs, balance);
+    triggerTrace(shady);
+    triggerTrace(gov);
     const shadyDuration = shady.traceExpiresAtMs! - shady.traceStartedAtMs!;
     const govDuration = gov.traceExpiresAtMs! - gov.traceStartedAtMs!;
     expect(govDuration).toBeLessThan(shadyDuration);

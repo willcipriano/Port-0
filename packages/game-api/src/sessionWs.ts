@@ -6,10 +6,12 @@ import {
   analyzeOwnershipLogs,
   formatReconOutput,
   formatLogAnalysisOutput,
+  findTool,
   type HackSessionState,
   type SessionClientMessage,
   type SessionServerMessage,
   type TargetMachineContext,
+  readRootPasswordFromFilesystem,
   connectSession,
   tickSession,
   handleShellCommand,
@@ -33,6 +35,7 @@ import {
   listInstalledTools,
   saveHackSession,
   storeIntel,
+  storeSavedRootPassword,
   type DbAccountWithRig,
 } from '@port0/db';
 
@@ -91,6 +94,7 @@ function machineToTarget(row: NonNullable<Awaited<ReturnType<typeof findMachineB
     faction: row.faction as TargetMachineContext['faction'],
     alarmActive: row.alarm_active,
     isLandmark: row.is_landmark,
+    rootPassword: readRootPasswordFromFilesystem(row.filesystem),
   };
 }
 
@@ -137,6 +141,20 @@ function startTickLoop(ws: WSContext, state: SessionSocketState): void {
             reconResult.source,
           );
           msg.output = formatReconOutput(reconResult);
+        }
+        if (msg.type === 'tool_completed') {
+          const tool = findTool(tools, msg.toolId);
+          if (tool?.category === 'cracker') {
+            await storeSavedRootPassword(
+              state.session.accountId,
+              state.session.target.ipv6,
+              state.session.target.rootPassword,
+            );
+            send(ws, {
+              type: 'password_saved',
+              targetIpv6: state.session.target.ipv6,
+            });
+          }
         }
       }
 
@@ -190,8 +208,12 @@ async function handleConnect(
 
   const existing = await getActiveSession(state.account.id);
   if (existing) {
-    send(ws, { type: 'error', code: 'session_active', message: 'Account already has an active hack session.' });
-    return;
+    if (state.session) {
+      send(ws, { type: 'error', code: 'session_active', message: 'Disconnect current session first.' });
+      return;
+    }
+    // Reclaim orphaned session left by a closed tab or crashed socket.
+    await deleteHackSession(existing);
   }
 
   const machine = await findMachineByIpv6(ipv6);

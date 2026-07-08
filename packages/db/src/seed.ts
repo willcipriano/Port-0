@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getPool } from './pool.js';
 import { bootstrapWorld } from './worldBootstrap.js';
-import { backfillMachineSecurity, backfillMachineLocation } from './machines.js';
+import { backfillMachineSecurity, backfillMachineLocation, backfillMachinePasswords } from './machines.js';
 
 function contentRoot(): string {
   if (process.env.CONTENT_DIR) return resolve(process.env.CONTENT_DIR);
@@ -78,6 +78,11 @@ export async function seedDatabase(): Promise<void> {
   const backfilledLocations = await backfillMachineLocation();
   if (backfilledLocations > 0) {
     console.log(`Backfilled geographic coordinates for ${backfilledLocations} machines.`);
+  }
+
+  const backfilledPasswords = await backfillMachinePasswords({ regenerateAll: true });
+  if (backfilledPasswords > 0) {
+    console.log(`Regenerated root passwords for ${backfilledPasswords} machines.`);
   }
 }
 

@@ -1,3 +1,4 @@
+export * from './crackerReveal.js';
 export * from './balanceLoader.js';
 export * from './sessionTypes.js';
 export * from './trace.js';
@@ -7,3 +8,4 @@ export * from './faction.js';
 export * from './sessionEngine.js';
 export * from './siege.js';
 export * from './recon.js';
+export * from './traceProbe.js';

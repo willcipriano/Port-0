@@ -36,7 +36,7 @@ export function validateToolLevel(tool: Tool, targetLevel: number): string | nul
 /** Wall-clock duration at full CPU share (rate = cpuCost / rigCpu when running). */
 export function computeToolDurationMs(tool: Tool, targetLevel: number): number {
   const levelFactor = Math.max(1, targetLevel);
-  return Math.max(1000, tool.durationSeconds * levelFactor * 10_000);
+  return Math.max(1000, tool.durationSeconds * levelFactor * 1_000);
 }
 
 export function computeResourceUsage(
@@ -96,7 +96,7 @@ export function applyToolEffect(
       if (session.shellAccessLevel === 'guest') {
         session.shellAccessLevel = 'user';
       }
-      return { output: `Password cracked. Access upgraded to ${session.shellAccessLevel}.` };
+      return { output: `Password cracked: ${session.target.rootPassword}. Access upgraded to ${session.shellAccessLevel}.` };
     case 'port_opener':
       session.firewallOpened = true;
       return { output: 'Firewall bypassed. Remote services reachable.' };
@@ -133,15 +133,4 @@ export function updateAccessLifecycle(session: HackSessionState): void {
       session.lifecycle = 'secured';
     }
   }
-}
-
-export function shouldTriggerAlarmOnConnect(targetLevel: number): boolean {
-  return targetLevel >= 1;
-}
-
-export function entryRequiresImmediateTrace(osArchetypeId: string, alarmLevel: number): boolean {
-  if (osArchetypeId === 'cheap_server' && alarmLevel <= 1) {
-    return false;
-  }
-  return alarmLevel >= 2;
 }

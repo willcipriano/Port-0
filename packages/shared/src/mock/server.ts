@@ -21,6 +21,26 @@ const mockAccount = {
   status: 'active',
 };
 
+interface MockPasswordEntry {
+  targetIpv6: string;
+  password: string;
+  lastUpdated: string;
+}
+
+const mockPasswordVault = new Map<string, MockPasswordEntry[]>();
+
+function getMockPasswords(accountId: string): MockPasswordEntry[] {
+  return mockPasswordVault.get(accountId) ?? [];
+}
+
+function deleteMockPassword(accountId: string, ipv6: string): boolean {
+  const list = mockPasswordVault.get(accountId) ?? [];
+  const next = list.filter(p => p.targetIpv6.toLowerCase() !== ipv6.toLowerCase());
+  if (next.length === list.length) return false;
+  mockPasswordVault.set(accountId, next);
+  return true;
+}
+
 function json(res: import('node:http').ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(body));
@@ -125,6 +145,17 @@ const server = createServer((req, res) => {
         { toolId: 'cracker_l1', price: 75 },
       ],
     });
+  }
+
+  if (req.method === 'GET' && path === '/passwords') {
+    return json(res, 200, { passwords: getMockPasswords(mockAccount.id) });
+  }
+
+  if (req.method === 'DELETE' && path.startsWith('/passwords/')) {
+    const ipv6 = decodeURIComponent(path.slice('/passwords/'.length));
+    const deleted = deleteMockPassword(mockAccount.id, ipv6);
+    if (!deleted) return json(res, 404, { error: 'not_found' });
+    return json(res, 200, { ok: true });
   }
 
   json(res, 404, { error: 'not_found', path });

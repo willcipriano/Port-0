@@ -208,6 +208,50 @@ paths:
                     items:
                       $ref: '#/components/schemas/Machine'
 
+  /passwords:
+    get:
+      tags: [Fleet]
+      summary: List saved root passwords for the authenticated account (Password Vault)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Password vault entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  passwords:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedRootPassword'
+
+  /passwords/{ipv6}:
+    delete:
+      tags: [Fleet]
+      summary: Remove a saved root password entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ipv6
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        '404':
+          description: Entry not found
+
   /machines/{ipv6}/harden:
     post:
       tags: [Fleet]
@@ -480,6 +524,19 @@ components:
           type: string
           format: date-time
 
+    SavedRootPassword:
+      type: object
+      description: Cracked root credential for a target machine (Password Vault)
+      required: [targetIpv6, password, lastUpdated]
+      properties:
+        targetIpv6:
+          type: string
+        password:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
     WorldSubnetResponse:
       type: object
       required: [subnet, heatLevel]
@@ -540,13 +597,20 @@ x-websockets:
       - disconnect
     serverMessages:
       - session_started
-      - tool_output
+      - tool_started
+      - tool_progress
+      - tool_completed
+      - tool_cancelled
+      - task_manager
+      - trace_update
       - shell_output
-      - trace_progress
-      - claimed
-      - traced
-      - tick_applied
+      - session_ended
+      - caught
       - error
+    notes:
+      tool_progress: |
+        Includes progressPercent each tick. Cracker tools also send revealedPrefix —
+        a growing prefix of the real root password (server-authoritative).
   /siege/{id}:
     description: Interactive siege defense window
     clientMessages:

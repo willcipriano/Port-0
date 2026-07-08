@@ -18,13 +18,25 @@ export interface WinState {
   minimized: boolean;
   maximized: boolean;
   closed: boolean;
+  dynamic?: boolean;
+  toolId?: string;
+  runId?: string;
   /** position before maximize */
   restoreRect?: { x: number; y: number; width: number; height: number };
 }
 
-export type WinPatch = Partial<Pick<WinState, 'x' | 'y' | 'width' | 'height' | 'zIndex' | 'minimized' | 'maximized' | 'closed' | 'restoreRect'>>;
+export interface ToolWindowDef {
+  id?: string;
+  title: string;
+  component: string;
+  toolId?: string;
+  runId?: string;
+}
+
+export type WinPatch = Partial<Pick<WinState, 'x' | 'y' | 'width' | 'height' | 'zIndex' | 'minimized' | 'maximized' | 'closed' | 'restoreRect' | 'runId'>>;
 
 let zTop = 10;
+let toolWindowCounter = 0;
 
 export function useWindowManager(viewport: Viewport | null) {
   const referenceLayout = useRef(DEFAULT_WINDOWS);
@@ -99,5 +111,55 @@ export function useWindowManager(viewport: Viewport | null) {
     }));
   }, [viewport]);
 
-  return { windows, activeId, viewport, focus, close, open, toggleMinimize, toggleMaximize, move, resize, update };
+  const spawnToolWindow = useCallback((def: ToolWindowDef): string => {
+    toolWindowCounter += 1;
+    const id = def.id ?? `tool-${def.toolId ?? def.component}-${toolWindowCounter}`;
+    zTop += 1;
+    const offset = toolWindowCounter % 6;
+    const baseW = 340;
+    const baseH = 220;
+    const w = viewport ? Math.min(baseW, viewport.width - 24) : baseW;
+    const h = viewport ? Math.min(baseH, viewport.height - 60) : baseH;
+    const rect = clampRect(
+      { x: 32 + offset * 24, y: 32 + offset * 24, width: w, height: h },
+      viewport?.width ?? baseW,
+      viewport?.height ?? baseH,
+    );
+    const win: WinState = {
+      id,
+      title: def.title,
+      component: def.component,
+      ...rect,
+      zIndex: zTop,
+      minimized: false,
+      maximized: false,
+      closed: false,
+      dynamic: true,
+      toolId: def.toolId,
+      runId: def.runId,
+    };
+    setActiveId(id);
+    setWindows(prev => [...prev, win]);
+    return id;
+  }, [viewport]);
+
+  const closeToolWindow = useCallback((id: string) => {
+    setWindows(prev => prev.filter(w => w.id !== id));
+  }, []);
+
+  return {
+    windows,
+    activeId,
+    viewport,
+    focus,
+    close,
+    open,
+    toggleMinimize,
+    toggleMaximize,
+    move,
+    resize,
+    update,
+    spawnToolWindow,
+    closeToolWindow,
+  };
 }

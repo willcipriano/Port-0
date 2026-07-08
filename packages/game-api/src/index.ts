@@ -14,6 +14,8 @@ import {
   getScan,
   getFleetResponse,
   listIntel,
+  listSavedRootPasswords,
+  deleteSavedRootPassword,
   listMarketCatalog,
   listTickSummariesSince,
   listVirusInventory,
@@ -229,6 +231,17 @@ app.patch(
 app.get('/intel', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
   const intel = await listIntel(getAccountId(c));
   return c.json({ intel });
+});
+
+app.get('/passwords', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const passwords = await listSavedRootPasswords(getAccountId(c));
+  return c.json({ passwords });
+});
+
+app.delete('/passwords/:ipv6', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const deleted = await deleteSavedRootPassword(getAccountId(c), c.req.param('ipv6'));
+  if (!deleted) throw new ApiError(404, 'not_found', 'Password entry not found');
+  return c.json({ ok: true });
 });
 
 const declareSiegeSchema = z.object({

@@ -77,6 +77,6 @@ export function crackScrambleInterval(progressPercent: number): number {
 }
 
 export function parseCrackedPassword(output: string): string | null {
-  const match = output.match(/Password cracked:\s*(\S+)/);
+  const match = output.match(/Password cracked:\s*(\S+)\s+—/);
   return match?.[1] ?? null;
 }

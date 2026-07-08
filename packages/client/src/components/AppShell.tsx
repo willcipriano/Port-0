@@ -69,10 +69,12 @@ export function AppShell({ account, onLogout }: Props) {
 
   const renderWindow = useCallback((win: WinState) => {
     switch (win.component) {
-      case 'WorldMap':   return <WorldMap />;
+      case 'WorldMap':
+        return <WorldMap accountId={account.id} />;
       case 'ServerList':
         return (
           <ServerList
+            accountId={account.id}
             onConnect={session.connect}
             connectedIpv6={session.connectedIpv6}
             connectingIpv6={session.connectingIpv6}

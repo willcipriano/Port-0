@@ -96,7 +96,7 @@ export function applyToolEffect(
       if (session.shellAccessLevel === 'guest') {
         session.shellAccessLevel = 'user';
       }
-      return { output: `Password cracked: ${session.target.rootPassword}. Access upgraded to ${session.shellAccessLevel}.` };
+      return { output: `Password cracked: ${session.target.rootPassword} — Access upgraded to ${session.shellAccessLevel}.` };
     case 'port_opener':
       session.firewallOpened = true;
       return { output: 'Firewall bypassed. Remote services reachable.' };

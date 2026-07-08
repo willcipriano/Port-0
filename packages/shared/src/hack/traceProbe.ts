@@ -24,7 +24,8 @@ export function computeTraceProbeChance(
   const heat = heatMultiplier(session.subnetHeatLevel, balance);
   const faction = factionMultiplier(session.target.faction, balance);
   const levelFactor = 1 + balance.probeAlarmLevelMultiplier * Math.max(0, alarmLevel - 1);
-  return balance.probeBasePerTick * levelFactor * heat * faction;
+  const raw = balance.probeBasePerTick * levelFactor * heat * faction;
+  return Math.min(1, Math.max(0, raw));
 }
 
 export function canRollTraceProbe(session: HackSessionState): boolean {

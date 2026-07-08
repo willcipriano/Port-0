@@ -166,6 +166,20 @@ describe('rollTraceProbe', () => {
     expect(rollTraceProbe(session, TEST_BALANCE, () => chance - 0.001)).toBe(true);
     expect(rollTraceProbe(session, TEST_BALANCE, () => chance + 0.001)).toBe(false);
   });
+
+  it('clamps probe chance to 1 when multipliers stack high', () => {
+    const session = baseSession({
+      subnetHeatLevel: 100,
+      runningTools: [CRACKER_RUN],
+    });
+    const inflated: TraceBalance = {
+      ...TEST_BALANCE,
+      probeBasePerTick: 2,
+    };
+    expect(computeTraceProbeChance(session, inflated)).toBe(1);
+    expect(rollTraceProbe(session, inflated, () => 0.5)).toBe(true);
+    expect(rollTraceProbe(session, inflated, () => 1)).toBe(false);
+  });
 });
 
 describe('connectSession', () => {

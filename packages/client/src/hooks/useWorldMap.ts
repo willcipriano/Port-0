@@ -21,8 +21,8 @@ interface WorldNodesResponse {
  * The TopoJSON is only fetched once per page load; nodes re-fetch when the
  * caller increments `refreshKey`.
  */
-export function useWorldMap(refreshKey = 0) {
-  const { get } = useApi();
+export function useWorldMap(accountId: string, refreshKey = 0) {
+  const { get } = useApi(accountId);
   const [topology, setTopology] = useState<Topology<Objects> | null>(null);
   const [nodes, setNodes] = useState<WorldNode[]>([]);
   const [loading, setLoading] = useState(true);

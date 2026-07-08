@@ -34,6 +34,7 @@ function mapNode(node: WorldNode, owned: string[]): Machine {
 }
 
 interface Props {
+  accountId: string;
   onConnect?: (ipv6: string) => void;
   connectedIpv6?: string | null;
   connectingIpv6?: string | null;
@@ -41,12 +42,13 @@ interface Props {
 }
 
 export function ServerList({
+  accountId,
   onConnect,
   connectedIpv6,
   connectingIpv6,
   connectionPhase = 'idle',
 }: Props) {
-  const { get } = useApi();
+  const { get } = useApi(accountId);
   const [machines, setMachines] = useState<Machine[]>([]);
   const [owned, setOwned] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);

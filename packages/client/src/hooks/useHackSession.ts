@@ -111,7 +111,8 @@ export function useHackSession(accountId: string): HackSession {
   const pendingIpv6Ref = useRef<string | null>(null);
   const listenersRef = useRef(new Set<(event: SessionEvent) => void>());
   const reconnectAttemptRef = useRef(0);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimerRef = useRef<number | null>(null);
+  const disposedRef = useRef(false);
   const phaseRef = useRef(phase);
   const connectedIpv6Ref = useRef(connectedIpv6);
   const toolDurationsRef = useRef<Map<string, number>>(new Map());
@@ -359,13 +360,14 @@ export function useHackSession(accountId: string): HackSession {
     ws.onclose = () => {
       setWsReady(false);
       wsRef.current = null;
+      if (disposedRef.current) return;
       if (phaseRef.current === 'connected' || phaseRef.current === 'connecting') {
         resetSession();
         emit({ type: 'ended', reason: 'socket_closed', message: 'Connection lost.' });
       }
       const delay = Math.min(30_000, 1000 * 2 ** reconnectAttemptRef.current);
       reconnectAttemptRef.current += 1;
-      reconnectTimerRef.current = setTimeout(connectSocket, delay);
+      reconnectTimerRef.current = window.setTimeout(connectSocket, delay);
     };
 
     ws.onerror = () => {
@@ -374,11 +376,20 @@ export function useHackSession(accountId: string): HackSession {
   }, [accountId, handleMessage, emit, resetSession]);
 
   useEffect(() => {
+    disposedRef.current = false;
     connectSocket();
     return () => {
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      wsRef.current?.close();
-      wsRef.current = null;
+      disposedRef.current = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      const ws = wsRef.current;
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+        wsRef.current = null;
+      }
     };
   }, [connectSocket]);
 

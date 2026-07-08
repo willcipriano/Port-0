@@ -25,3 +25,7 @@ export {
   generateRootPassword,
   deriveRootPasswordFromIpv6,
 } from './generatePassword.js';
+export {
+  passwordLevelSummary,
+  mockPasswordLevelForNode,
+} from './passwordLevelLabel.js';

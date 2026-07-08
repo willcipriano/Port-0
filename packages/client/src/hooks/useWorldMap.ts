@@ -8,6 +8,7 @@ export interface WorldNode {
   isLandmark: boolean;
   latitude: number;
   longitude: number;
+  passwordLevel: number;
 }
 
 interface WorldNodesResponse {

@@ -208,11 +208,8 @@ async function handleConnect(
 
   const existing = await getActiveSession(state.account.id);
   if (existing) {
-    if (state.session) {
-      send(ws, { type: 'error', code: 'session_active', message: 'Disconnect current session first.' });
-      return;
-    }
-    // Reclaim orphaned session left by a closed tab or crashed socket.
+    // Reclaims orphaned Redis sessions (crashed tab). Does not arbitrate two
+    // simultaneously-connected sockets for the same account; last connect wins.
     await deleteHackSession(existing);
   }
 

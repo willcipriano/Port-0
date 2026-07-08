@@ -130,8 +130,10 @@ app.get('/world/nodes', bearerAuthMiddleware, requireAction('read_only'), async 
     is_landmark: boolean;
     latitude: number | null;
     longitude: number | null;
+    password_level: number | null;
   }>(
-    `SELECT ipv6, os_archetype_id, is_landmark, latitude, longitude
+    `SELECT ipv6, os_archetype_id, is_landmark, latitude, longitude,
+            (security_components->>'password')::int AS password_level
      FROM machines
      ORDER BY is_landmark DESC, ipv6 ASC`,
   );
@@ -142,6 +144,7 @@ app.get('/world/nodes', bearerAuthMiddleware, requireAction('read_only'), async 
       isLandmark: row.is_landmark,
       latitude: row.latitude ?? 0,
       longitude: row.longitude ?? 0,
+      passwordLevel: row.password_level ?? 1,
     })),
   });
 });

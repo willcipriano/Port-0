@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { passwordLevelSummary } from '@port0/shared';
 import { useApi } from '../../hooks/useApi';
 import type { ConnectionPhase } from '../../hooks/useHackSession';
 
@@ -6,6 +7,7 @@ interface Machine {
   ipv6: string;
   osArchetypeId: string;
   securitySummary: string;
+  passwordLevel: number;
   isLandmark: boolean;
   status?: 'unknown' | 'online' | 'owned';
 }
@@ -14,12 +16,13 @@ interface WorldNode {
   ipv6: string;
   osArchetypeId: string;
   isLandmark: boolean;
+  passwordLevel: number;
 }
 
-function securityLabel(archetypeId: string): string {
-  if (archetypeId === 'corp_workstation' || archetypeId === 'mainframe') return 'L3 hardened';
-  if (archetypeId === 'generic_linux') return 'L2 mixed';
-  return 'L1 weak';
+function securityColor(passwordLevel: number): string {
+  if (passwordLevel >= 3) return 'var(--accent-red)';
+  if (passwordLevel === 2) return 'var(--accent-orange)';
+  return 'var(--accent-green)';
 }
 
 function mapNode(node: WorldNode, owned: string[]): Machine {
@@ -27,7 +30,8 @@ function mapNode(node: WorldNode, owned: string[]): Machine {
   return {
     ipv6: node.ipv6,
     osArchetypeId: node.osArchetypeId,
-    securitySummary: securityLabel(node.osArchetypeId),
+    securitySummary: passwordLevelSummary(node.passwordLevel),
+    passwordLevel: node.passwordLevel,
     isLandmark: node.isLandmark,
     status: isOwned ? 'owned' : 'online',
   };
@@ -164,9 +168,7 @@ export function ServerList({
                     <td>
                       <span style={{
                         fontSize: '10px',
-                        color: m.securitySummary.includes('weak') ? 'var(--accent-green)'
-                             : m.securitySummary.includes('hard') ? 'var(--accent-red)'
-                             : 'var(--accent-orange)',
+                        color: securityColor(m.passwordLevel),
                       }}>
                         {m.securitySummary.toUpperCase()}
                       </span>

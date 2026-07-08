@@ -25,6 +25,13 @@ export function ConnectionStatus({ session }: Props) {
   } = session;
 
   const visible = phase === 'connecting' || phase === 'connected' || phase === 'disconnecting';
+
+  useEffect(() => {
+    if (!lastError) return;
+    const timer = setTimeout(clearError, 4000);
+    return () => clearTimeout(timer);
+  }, [lastError, clearError]);
+
   if (!visible) return null;
 
   const dangerColor = traceLevel === 'critical' || traceLevel === 'caught'
@@ -35,12 +42,6 @@ export function ConnectionStatus({ session }: Props) {
 
   const isConnected = phase === 'connected';
   const dotColor = isConnected ? 'var(--accent-green)' : 'var(--accent-orange)';
-
-  useEffect(() => {
-    if (!lastError) return;
-    const timer = setTimeout(clearError, 4000);
-    return () => clearTimeout(timer);
-  }, [lastError, clearError]);
 
   const ipv6 = connectedIpv6 ?? '…';
 

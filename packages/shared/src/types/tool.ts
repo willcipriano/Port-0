@@ -5,7 +5,7 @@ export type ToolCategory =
   | 'trace_blocker'
   | 'log_cleaner'
   | 'recon'
-  | 'port_opener';
+  | 'anti_firewall';
 
 export type ToolTargetType =
   | 'password'

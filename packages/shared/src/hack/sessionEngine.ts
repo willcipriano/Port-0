@@ -15,6 +15,8 @@ import {
   computeResourceUsage,
   computeToolDurationMs,
   findTool,
+  firewallPenaltyMultiplier,
+  getEffectiveFirewallLevel,
   targetComponentLevel,
   toolOwned,
   toolProgressPercent,
@@ -30,6 +32,7 @@ import {
   traceRemainingSeconds,
 } from './trace.js';
 import { rollTraceProbe } from './traceProbe.js';
+import { advanceIceDisruption } from './ice.js';
 import { computeCrackerRevealedPrefix } from './crackerReveal.js';
 
 let traceBalanceCache: TraceBalance | null = null;
@@ -137,7 +140,6 @@ export function connectSession(input: ConnectInput, balance = getTraceBalance())
     traceStartedAtMs: null,
     blockerExtensionsMs: 0,
     passwordCracked: false,
-    firewallOpened: false,
     alarmDisabled: !input.target.alarmActive,
     runningTools: [],
     installedToolIds: [...input.rig.installedToolIds],
@@ -166,6 +168,8 @@ export function connectSession(input: ConnectInput, balance = getTraceBalance())
       ? new Date(session.traceExpiresAtMs).toISOString()
       : undefined,
     targetPasswordLevel: session.target.securityComponents.password,
+    targetFirewallLevel: session.target.securityComponents.firewall,
+    targetIceLevel: session.target.securityComponents.ice ?? 0,
   });
   messages.push(traceUpdateMessage(session, input.nowMs));
   messages.push(taskManagerMessage(session));
@@ -194,6 +198,8 @@ export function tickSession(
 
   advanceRunningTools(session, deltaMs, session.rigCpu);
 
+  messages.push(...advanceIceDisruption(session, tools, deltaMs, nowMs, rng));
+
   if (rollTraceProbe(session, balance, rng)) {
     triggerAlarm(session, nowMs, balance);
     messages.push(traceUpdateMessage(session, nowMs));
@@ -201,7 +207,7 @@ export function tickSession(
 
   for (const run of session.runningTools) {
     if (run.cancelled) continue;
-    if (!run.completed) {
+    if (!run.completed && !run.warmedUp) {
       const progressPercent = toolProgressPercent(run);
       const tool = findTool(tools, run.toolId);
       const progressMsg: SessionServerMessage = {
@@ -390,8 +396,15 @@ export function handleRunTool(
   if (tool.category === 'cracker' && session.passwordCracked) {
     return { messages: [{ type: 'error', code: 'already_done', message: 'Password already cracked.' }] };
   }
-  if (tool.category === 'port_opener' && session.firewallOpened) {
-    return { messages: [{ type: 'error', code: 'already_done', message: 'Firewall already bypassed.' }] };
+  if (tool.category === 'anti_firewall') {
+    const alreadyRunning = session.runningTools.some(
+      (r) => r.toolId === tool.id && !r.completed && !r.cancelled,
+    );
+    if (alreadyRunning) {
+      return {
+        messages: [{ type: 'error', code: 'already_running', message: 'Firewall dampener already running.' }],
+      };
+    }
   }
   if (tool.category === 'log_cleaner' && session.shellAccessLevel === 'guest' && !session.passwordCracked) {
     return {
@@ -403,6 +416,9 @@ export function handleRunTool(
   let durationMs = computeToolDurationMs(tool, targetLevel);
   if (tool.category === 'cracker') {
     durationMs = Math.max(durationMs, session.target.rootPassword.length * 350);
+  }
+  if (tool.category !== 'anti_firewall') {
+    durationMs = Math.round(durationMs * firewallPenaltyMultiplier(getEffectiveFirewallLevel(session)));
   }
   const run = {
     runId: randomUUID(),
@@ -416,6 +432,7 @@ export function handleRunTool(
     completed: false,
     cancelled: false,
     effectApplied: false,
+    warmedUp: false,
   };
   session.runningTools.push(run);
 

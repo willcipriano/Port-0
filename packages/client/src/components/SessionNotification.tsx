@@ -5,7 +5,7 @@ interface Toast {
   id: number;
   message: string;
   detail?: string;
-  tone: 'success' | 'error';
+  tone: 'success' | 'error' | 'warning';
 }
 
 interface Props {
@@ -32,6 +32,12 @@ export function SessionNotification({ session }: Props) {
           detail: event.targetIpv6.slice(0, -8) + suffix,
         });
       }
+      if (event.type === 'tool_disrupted') {
+        showToast({
+          tone: 'warning',
+          message: event.message.toUpperCase(),
+        });
+      }
     });
   }, [session, showToast]);
 
@@ -43,7 +49,11 @@ export function SessionNotification({ session }: Props) {
 
   if (!toast) return null;
 
-  const accent = toast.tone === 'success' ? 'var(--accent-green)' : 'var(--accent-red)';
+  const accent = toast.tone === 'success'
+    ? 'var(--accent-green)'
+    : toast.tone === 'warning'
+      ? 'var(--accent-orange)'
+      : 'var(--accent-red)';
 
   return (
     <div
@@ -61,7 +71,11 @@ export function SessionNotification({ session }: Props) {
         background: 'var(--bg-panel-3)',
         border: `1px solid ${accent}`,
         borderLeft: `3px solid ${accent}`,
-        boxShadow: toast.tone === 'success' ? 'var(--glow-green)' : 'var(--glow-red)',
+        boxShadow: toast.tone === 'success'
+          ? 'var(--glow-green)'
+          : toast.tone === 'warning'
+            ? '0 0 12px rgba(255, 140, 0, 0.35)'
+            : 'var(--glow-red)',
         animation: 'fade-in 0.25s ease, session-toast-out 0.3s ease 4.2s forwards',
         pointerEvents: 'none',
       }}

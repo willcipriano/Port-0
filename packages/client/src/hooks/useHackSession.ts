@@ -9,6 +9,7 @@ export type SessionEvent =
   | { type: 'shell_output'; output: string }
   | { type: 'tool_started'; runId: string; toolId: string; passwordLength?: number; durationSeconds?: number }
   | { type: 'tool_completed'; toolId: string; output: string }
+  | { type: 'tool_disrupted'; runId: string; toolId: string; reason: 'ice'; disruptionKind: 'disconnect' | 'bad_character' | 'stall'; message: string; injectedCharacter?: string; addedDelayMs?: number }
   | { type: 'password_saved'; targetIpv6: string }
   | { type: 'error'; message: string };
 
@@ -32,6 +33,8 @@ export interface HackSession {
   traceLevel: TraceLevel;
   lastError: string | null;
   targetPasswordLevel: number | null;
+  targetFirewallLevel: number | null;
+  targetIceLevel: number | null;
   runningTools: RunningToolView[];
   cpuUsed: number;
   ramUsed: number;
@@ -68,7 +71,12 @@ type ServerMessage = {
   durationSeconds?: number;
   revealedPrefix?: string;
   targetPasswordLevel?: number;
+  targetFirewallLevel?: number;
+  targetIceLevel?: number;
   targetIpv6?: string;
+  disruptionKind?: 'disconnect' | 'bad_character' | 'stall';
+  injectedCharacter?: string;
+  addedDelayMs?: number;
 };
 
 function traceLevelFromPercent(percent: number): TraceLevel {
@@ -103,6 +111,8 @@ export function useHackSession(accountId: string): HackSession {
   const [traceLevel, setTraceLevel] = useState<TraceLevel>('safe');
   const [lastError, setLastError] = useState<string | null>(null);
   const [targetPasswordLevel, setTargetPasswordLevel] = useState<number | null>(null);
+  const [targetFirewallLevel, setTargetFirewallLevel] = useState<number | null>(null);
+  const [targetIceLevel, setTargetIceLevel] = useState<number | null>(null);
   const [runningTools, setRunningTools] = useState<RunningToolView[]>([]);
   const [cpuUsed, setCpuUsed] = useState(0);
   const [ramUsed, setRamUsed] = useState(0);
@@ -139,6 +149,8 @@ export function useHackSession(accountId: string): HackSession {
     setTraceRemainingSeconds(INITIAL_TRACE.traceRemainingSeconds);
     setTraceLevel(INITIAL_TRACE.traceLevel);
     setTargetPasswordLevel(null);
+    setTargetFirewallLevel(null);
+    setTargetIceLevel(null);
     setRunningTools([]);
     setCpuUsed(0);
     setRamUsed(0);
@@ -193,6 +205,12 @@ export function useHackSession(accountId: string): HackSession {
         setConnectingIpv6(null);
         if (msg.targetPasswordLevel !== undefined) {
           setTargetPasswordLevel(msg.targetPasswordLevel);
+        }
+        if (msg.targetFirewallLevel !== undefined) {
+          setTargetFirewallLevel(msg.targetFirewallLevel);
+        }
+        if (msg.targetIceLevel !== undefined) {
+          setTargetIceLevel(msg.targetIceLevel);
         }
         if (msg.prompt) setShellPrompt(msg.prompt);
         if (msg.tracing !== undefined) {
@@ -272,6 +290,32 @@ export function useHackSession(accountId: string): HackSession {
       case 'tool_cancelled':
         if (msg.runId) {
           setRunningTools(prev => prev.filter(tool => tool.runId !== msg.runId));
+        }
+        break;
+
+      case 'tool_disrupted':
+        if (msg.runId && msg.toolId && msg.reason === 'ice' && msg.disruptionKind) {
+          if (msg.disruptionKind === 'disconnect') {
+            setRunningTools(prev => prev.filter(tool => tool.runId !== msg.runId));
+          } else if (msg.addedDelayMs !== undefined) {
+            const addedSeconds = Math.ceil(msg.addedDelayMs / 1000);
+            setRunningTools(prev => prev.map(tool => {
+              if (tool.runId !== msg.runId) return tool;
+              const nextDuration = (tool.durationSeconds ?? 0) + addedSeconds;
+              toolDurationsRef.current.set(msg.runId!, nextDuration);
+              return { ...tool, durationSeconds: nextDuration };
+            }));
+          }
+          emit({
+            type: 'tool_disrupted',
+            runId: msg.runId,
+            toolId: msg.toolId,
+            reason: 'ice',
+            disruptionKind: msg.disruptionKind,
+            message: msg.message ?? 'Tool disrupted by ICE.',
+            injectedCharacter: msg.injectedCharacter,
+            addedDelayMs: msg.addedDelayMs,
+          });
         }
         break;
 
@@ -454,6 +498,8 @@ export function useHackSession(accountId: string): HackSession {
     traceLevel,
     lastError,
     targetPasswordLevel,
+    targetFirewallLevel,
+    targetIceLevel,
     runningTools,
     cpuUsed,
     ramUsed,

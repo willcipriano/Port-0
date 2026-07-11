@@ -13,6 +13,9 @@ export default defineConfig({
       '/fleet': 'http://localhost:3099',
       '/market': 'http://localhost:3099',
       '/passwords': 'http://localhost:3002',
+      '/filesystem': 'http://localhost:3002',
+      '/rig': 'http://localhost:3002',
+      '/inventory': 'http://localhost:3002',
       '/health': 'http://localhost:3099',
       '/session': {
         target: 'ws://localhost:3002',

@@ -26,7 +26,7 @@ const TEST_BALANCE: TraceBalance = {
     escalationMultiplier: 1.5,
     confiscateIllegalOnPrison: true,
   },
-  illegalToolCategories: ['cracker', 'port_opener', 'trace_blocker', 'log_cleaner'],
+  illegalToolCategories: ['cracker', 'anti_firewall', 'trace_blocker', 'log_cleaner'],
   probeBasePerTick: 0.02,
   probeAlarmLevelMultiplier: 0.25,
 };
@@ -58,7 +58,6 @@ function baseSession(overrides: Partial<HackSessionState> = {}): HackSessionStat
     traceStartedAtMs: null,
     blockerExtensionsMs: 0,
     passwordCracked: false,
-    firewallOpened: false,
     alarmDisabled: false,
     runningTools: [],
     installedToolIds: ['cracker_l1'],
@@ -89,6 +88,7 @@ const CRACKER_RUN: HackSessionState['runningTools'][number] = {
   completed: false,
   cancelled: false,
   effectApplied: false,
+  warmedUp: false,
 };
 
 const MOCK_TOOLS: Tool[] = [

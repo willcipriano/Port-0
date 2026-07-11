@@ -103,13 +103,18 @@ export async function updateFleetRole(
   return updated;
 }
 
-export function toRigResponse(account: DbAccountWithRig) {
+export function toRigResponse(
+  account: DbAccountWithRig,
+  usage?: { usedQgb: number; capacityQgb: number },
+) {
   return {
     cpu: account.cpu,
     ram: account.ram,
     storage: account.storage,
     bandwidth: account.bandwidth,
     cyberware: Array.isArray(account.cyberware) ? account.cyberware : [],
+    usedQgb: usage?.usedQgb ?? 0,
+    capacityQgb: usage?.capacityQgb ?? account.storage,
   };
 }
 

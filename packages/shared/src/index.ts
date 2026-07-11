@@ -4,6 +4,7 @@ export * from './types/hackSession.js';
 export * from './types/tool.js';
 export * from './types/siege.js';
 export * from './types/world.js';
+export * from './types/filesystem.js';
 export * from './constants/ipv6.js';
 export * from './content/schemas.js';
 export * from './world/index.js';

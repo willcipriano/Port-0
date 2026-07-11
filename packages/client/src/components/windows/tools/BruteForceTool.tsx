@@ -59,6 +59,7 @@ export function BruteForceTool({ session, toolId, runId, onRunLinked }: Props) {
   const [crackedPassword, setCrackedPassword] = useState<string | null>(null);
   const [revealedPrefix, setRevealedPrefix] = useState('');
   const [durationSeconds, setDurationSeconds] = useState<number>(DEFAULT_EST_SECONDS);
+  const [iceWarning, setIceWarning] = useState<string | null>(null);
   const linkedRunIdRef = useRef(runId);
   const scrambleTickRef = useRef(0);
   const prevTargetRef = useRef<string | null>(null);
@@ -230,12 +231,18 @@ export function BruteForceTool({ session, toolId, runId, onRunLinked }: Props) {
         setEstimatePhase('ready');
         setCrackedPassword(null);
         setRevealedPrefix('');
+        setIceWarning(null);
         scrambleTickRef.current = 0;
         if (event.passwordLength) setPasswordLength(event.passwordLength);
         if (event.durationSeconds) {
           setDurationSeconds(event.durationSeconds);
           setRolledEstimate(rollCrackEstimate(targetIpv6 ?? '', event.durationSeconds));
         }
+      }
+      if (event.type === 'tool_disrupted' && event.toolId === toolId && event.disruptionKind === 'bad_character') {
+        const char = event.injectedCharacter ?? '?';
+        setIceWarning(`ICE injected "${char}" — crack delayed.`);
+        window.setTimeout(() => setIceWarning(null), 1500);
       }
       if (event.type === 'tool_completed' && event.toolId === toolId) {
         const pw = parseCrackedPassword(event.output);
@@ -352,6 +359,7 @@ export function BruteForceTool({ session, toolId, runId, onRunLinked }: Props) {
 
   const renderEstimateText = () => {
     if (resetBanner) return resetBanner;
+    if (iceWarning) return iceWarning.toUpperCase();
     if (toolError) return toolError.toUpperCase();
     if (uiPhase === 'breaking') {
       return <>KEY FOUND — VERIFYING<span className="cracker-dots" /></>;

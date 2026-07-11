@@ -15,6 +15,12 @@ export const MVP_ARCHETYPE_WEIGHTS: ArchetypeWeight[] = [
 
 export const L1_COMPONENT_RANGE = { min: 1, max: 2 } as const;
 
+/** Firewall can be level 0 (baseline) on tier-1 targets. */
+export const FIREWALL_TIER1_RANGE = { min: 0, max: 2 } as const;
+
+/** ICE on tier-1 targets: low or absent. */
+export const ICE_TIER1_RANGE = { min: 0, max: 1 } as const;
+
 export const RESOURCE_RANGES: Record<
   OsArchetypeId,
   { cpu: [number, number]; ram: [number, number]; storage: [number, number] }

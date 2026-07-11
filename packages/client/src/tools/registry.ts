@@ -10,6 +10,17 @@ export const TOOL_REGISTRY = {
     component: 'BruteForceTool',
     windowTitle: 'BRUTE FORCE // PASSWORD GUESSER',
   },
+  anti_firewall: {
+    menuPath: ['DEFENSE'] as const,
+    label: 'Firewall Dampener',
+    description: 'Reduce firewall delay while running',
+    icon: '[FW-]',
+    toolId: 'anti_firewall_l1',
+    maxSecurityLevel: 5,
+    estimatedDurationSeconds: 4,
+    component: 'AntiFirewallTool',
+    windowTitle: 'FIREWALL DAMPENER // ANTI-FW',
+  },
 } as const;
 
 export function getToolRegistryEntry(toolId: string) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { passwordLevelSummary } from '@port0/shared';
+import { passwordLevelSummary } from '@port0/shared/world/passwordLevelLabel';
 import { useApi } from '../../hooks/useApi';
 import type { ConnectionPhase } from '../../hooks/useHackSession';
 

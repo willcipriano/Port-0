@@ -20,6 +20,7 @@ export function ConnectionStatus({ session }: Props) {
     traceRemainingSeconds,
     traceLevel,
     lastError,
+    targetIceLevel,
     disconnect,
     clearError,
   } = session;
@@ -109,6 +110,20 @@ export function ConnectionStatus({ session }: Props) {
           DISCONNECT
         </button>
       </div>
+
+      {isConnected && targetIceLevel != null && (
+        <div style={{
+          fontSize: '9px',
+          letterSpacing: '0.1em',
+          color: targetIceLevel > 0 ? 'var(--accent-orange)' : 'var(--text-dim)',
+          padding: '2px 6px',
+          background: 'var(--bg-panel-2)',
+          border: '1px solid var(--border)',
+          borderRadius: '1px',
+        }}>
+          ICE L{targetIceLevel}
+        </div>
+      )}
 
       {/* Trace row */}
       <div style={{

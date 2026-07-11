@@ -1,0 +1,19 @@
+{
+  "balance_version": "balance-v0",
+  "default_rig_storage_qgb": 1000,
+  "tool_size_qgb": {
+    "scanner_l1": 8,
+    "cracker_l1": 12,
+    "trace_blocker_l1": 10,
+    "anti_firewall_l1": 90,
+    "recon_l1": 15,
+    "log_cleaner_l1": 9
+  },
+  "default_tool_size_qgb": 10,
+  "loot_defaults": {
+    "data": { "size_qgb": 40, "value_credits": 25, "heat": "warm" },
+    "credentials": { "size_qgb": 4, "value_credits": 40, "heat": "hot" },
+    "source_code": { "size_qgb": 60, "value_credits": 50, "heat": "warm" },
+    "qrypted": { "size_qgb": 120, "value_credits": 200, "heat": "hot" }
+  }
+}

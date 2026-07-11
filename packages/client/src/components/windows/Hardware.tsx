@@ -4,6 +4,8 @@ import type { Account } from '../../hooks/useAuth';
 
 import type { HackSession } from '../../hooks/useHackSession';
 
+import { useApi } from '../../hooks/useApi';
+
 
 
 interface Props {
@@ -22,7 +24,7 @@ const TOOL_NAMES: Record<string, string> = {
 
   cracker_l1: 'Auth Cracker L1',
 
-  port_opener_l1: 'Port Opener L1',
+  anti_firewall_l1: 'Firewall Dampener',
 
   trace_blocker_l1: 'Trace Blocker L1',
 
@@ -37,8 +39,9 @@ const TOOL_NAMES: Record<string, string> = {
 export function Hardware({ account, session, onFocusToolWindow }: Props) {
 
   const [toast, setToast] = useState('');
-
-
+  const { get } = useApi(account.id);
+  const [usedQgb, setUsedQgb] = useState(0);
+  const [capacityQgb, setCapacityQgb] = useState(account.rigStats.storage);
 
   const connected = session.phase === 'connected';
 
@@ -53,6 +56,30 @@ export function Hardware({ account, session, onFocusToolWindow }: Props) {
   const freeRam = totalRam - usedRam;
 
   const freeCpu = totalCpu - usedCpu;
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadStorage = async () => {
+      try {
+        const res = await get<{ usedQgb: number; capacityQgb: number }>('/filesystem');
+        if (!cancelled) {
+          setUsedQgb(res.usedQgb ?? 0);
+          setCapacityQgb(res.capacityQgb ?? account.rigStats.storage);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsedQgb(0);
+          setCapacityQgb(account.rigStats.storage);
+        }
+      }
+    };
+    loadStorage();
+    const interval = window.setInterval(loadStorage, 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [get, account.rigStats.storage]);
 
 
 
@@ -80,7 +107,11 @@ export function Hardware({ account, session, onFocusToolWindow }: Props) {
 
         const name = TOOL_NAMES[event.toolId] ?? event.toolId;
 
-        showToast(`${name} complete`);
+        if (event.toolId === 'anti_firewall_l1') {
+          showToast(`${name} active`);
+        } else {
+          showToast(`${name} complete`);
+        }
 
       } else if (event.type === 'error') {
 
@@ -160,7 +191,7 @@ export function Hardware({ account, session, onFocusToolWindow }: Props) {
 
             { label: 'RAM', used: usedRam, total: totalRam, unit: 'GB' },
 
-            { label: 'STORAGE', used: 12, total: account.rigStats.storage, unit: 'GB' },
+            { label: 'STORAGE', used: usedQgb, total: capacityQgb, unit: 'QGB' },
 
             { label: 'BANDWIDTH', used: 0.2, total: account.rigStats.bandwidth, unit: 'Gbps' },
 

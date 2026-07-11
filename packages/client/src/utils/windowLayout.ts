@@ -23,8 +23,9 @@ export const DEFAULT_WINDOWS: LayoutWindow[] = [
   { id: 'servers',  title: 'SERVER LIST',        component: 'ServerList',  x: 420,  y: 10,  width: 430, height: 340, zIndex: 2, minimized: false, maximized: false, closed: false },
   { id: 'terminal', title: 'TERMINAL',            component: 'Terminal',    x: 10,   y: 360, width: 490, height: 340, zIndex: 3, minimized: false, maximized: false, closed: false },
   { id: 'hardware', title: 'HARDWARE // RIG',     component: 'Hardware',    x: 860,  y: 10,  width: 420, height: 460, zIndex: 4, minimized: false, maximized: false, closed: false },
-  { id: 'email',    title: 'EMAIL // CONTRACTS',  component: 'Email',       x: 510,  y: 360, width: 340, height: 340, zIndex: 5, minimized: false, maximized: false, closed: false },
-  { id: 'vault',    title: 'PASSWORD VAULT',      component: 'PasswordVault', x: 860, y: 480, width: 420, height: 380, zIndex: 6, minimized: false, maximized: false, closed: true },
+  { id: 'filesystem', title: 'LOCAL RIG // FS',   component: 'Filesystem',  x: 420,  y: 360, width: 430, height: 340, zIndex: 5, minimized: false, maximized: false, closed: true },
+  { id: 'email',    title: 'EMAIL // CONTRACTS',  component: 'Email',       x: 510,  y: 360, width: 340, height: 340, zIndex: 6, minimized: false, maximized: false, closed: false },
+  { id: 'vault',    title: 'PASSWORD VAULT',      component: 'PasswordVault', x: 860, y: 480, width: 420, height: 380, zIndex: 7, minimized: false, maximized: false, closed: true },
 ];
 
 export interface Rect {

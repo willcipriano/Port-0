@@ -38,16 +38,16 @@
       "description": "Extends trace deadline while running."
     },
     {
-      "id": "port_opener_l1",
-      "name": "Port Opener L1",
-      "category": "port_opener",
-      "max_security_level": 1,
+      "id": "anti_firewall_l1",
+      "name": "Firewall Dampener",
+      "category": "anti_firewall",
+      "max_security_level": 5,
       "ram_cost": 2,
-      "cpu_cost": 1,
-      "duration_seconds": 20,
+      "cpu_cost": 2,
+      "duration_seconds": 4,
       "target_type": "firewall",
-      "market_price": 80,
-      "description": "Bypass Firewall L1 restrictions."
+      "market_price": 150,
+      "description": "Warms up based on target firewall level; once active it continuously reduces the effective firewall by 1 while it keeps running."
     },
     {
       "id": "recon_l1",

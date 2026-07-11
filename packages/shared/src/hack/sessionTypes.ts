@@ -37,6 +37,11 @@ export interface RunningToolState {
   completed: boolean;
   cancelled: boolean;
   effectApplied: boolean;
+  warmedUp: boolean;
+  lastIceDisruptionAtMs?: number;
+  iceDisruptionCount?: number;
+  disruptedBy?: 'ice' | string;
+  iceDelayMs?: number;
 }
 
 export interface SessionCommandLogEntry {
@@ -56,7 +61,6 @@ export interface HackSessionState {
   traceStartedAtMs: number | null;
   blockerExtensionsMs: number;
   passwordCracked: boolean;
-  firewallOpened: boolean;
   alarmDisabled: boolean;
   runningTools: RunningToolState[];
   installedToolIds: string[];
@@ -99,13 +103,14 @@ export type SessionClientMessage =
 
 export type SessionServerMessage =
   | { type: 'session_ready'; accountId: string }
-  | { type: 'session_started'; sessionId: string; prompt: string; accessLevel: ShellAccessLevel; tracing: boolean; traceExpiresAt?: string; targetPasswordLevel?: number }
+  | { type: 'session_started'; sessionId: string; prompt: string; accessLevel: ShellAccessLevel; tracing: boolean; traceExpiresAt?: string; targetPasswordLevel?: number; targetFirewallLevel?: number; targetIceLevel?: number }
   | { type: 'shell_output'; output: string }
   | { type: 'tool_started'; runId: string; toolId: string; durationSeconds: number; passwordLength?: number }
   | { type: 'tool_progress'; runId: string; toolId: string; progressPercent: number; revealedPrefix?: string }
   | { type: 'tool_completed'; runId: string; toolId: string; output: string }
   | { type: 'password_saved'; targetIpv6: string }
   | { type: 'tool_cancelled'; runId: string; toolId: string }
+  | { type: 'tool_disrupted'; runId: string; toolId: string; reason: 'ice'; disruptionKind: 'disconnect' | 'bad_character' | 'stall'; message: string; injectedCharacter?: string; addedDelayMs?: number }
   | { type: 'trace_update'; tracing: boolean; progressSeconds: number; expiresAt: string | null; remainingSeconds: number }
   | { type: 'task_manager'; cpuUsed: number; cpuTotal: number; ramUsed: number; ramTotal: number; runningTools: Array<{ runId: string; toolId: string; progressPercent: number; revealedPrefix?: string }> }
   | { type: 'claim_result'; success: boolean; ipv6?: string; message: string }

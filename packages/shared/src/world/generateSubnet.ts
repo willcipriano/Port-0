@@ -5,6 +5,8 @@ import { GEO_ANCHORS, GEO_ANCHOR_TOTAL_WEIGHT, type GeoAnchor } from './geoAncho
 import { createIpv6Allocator } from './ipv6Allocator.js';
 import {
   L1_COMPONENT_RANGE,
+  FIREWALL_TIER1_RANGE,
+  ICE_TIER1_RANGE,
   MVP_ARCHETYPE_WEIGHTS,
   RESOURCE_RANGES,
   type ArchetypeWeight,
@@ -93,19 +95,21 @@ function rollSecurity(rng: Rng, archetype: ArchetypeFileEntry): SecurityComponen
   if (archetype.tier === 1) {
     return {
       password: rng.int(L1_COMPONENT_RANGE.min, L1_COMPONENT_RANGE.max),
-      firewall: rng.int(L1_COMPONENT_RANGE.min, L1_COMPONENT_RANGE.max),
+      firewall: rng.int(FIREWALL_TIER1_RANGE.min, FIREWALL_TIER1_RANGE.max),
       alarm: rng.int(L1_COMPONENT_RANGE.min, L1_COMPONENT_RANGE.max),
       encryption: defaults.encryption,
       antivirus: defaults.antivirus,
+      ice: rng.int(ICE_TIER1_RANGE.min, ICE_TIER1_RANGE.max),
     };
   }
 
   return {
     password: clamp(defaults.password + rng.int(-1, 1), 1, 5),
-    firewall: clamp(defaults.firewall + rng.int(-1, 1), 1, 5),
+    firewall: clamp(defaults.firewall + rng.int(-1, 1), 0, 5),
     alarm: clamp(defaults.alarm + rng.int(-1, 1), 1, 5),
     encryption: clamp(defaults.encryption + rng.int(-1, 1), 0, 5),
     antivirus: clamp(defaults.antivirus + rng.int(-1, 1), 0, 5),
+    ice: clamp((defaults.ice ?? 0) + rng.int(-1, 1), 0, 5),
   };
 }
 

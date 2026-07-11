@@ -50,6 +50,31 @@
   --header-h: 38px;
   --panel-gap: 2px;
   --radius: 2px;
+
+  /* Filesystem category colors */
+  --fs-tool:     #00e5ff;
+  --fs-loot:     #00ff9f;
+  --fs-qrypt:    #ff8800;
+  --fs-cred:     #ffee00;
+  --fs-intel:    #4488ff;
+  --fs-contract: #aa88ff;
+  --fs-log:      #5a7060;
+  --fs-module:   #88ffcc;
+  --fs-archive:  #6688aa;
+  --fs-trash:    #3a4048;
+}
+
+.fs-storage-map {
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 229, 255, 0.02) 2px,
+      rgba(0, 229, 255, 0.02) 3px
+    ),
+    var(--bg-panel-2);
 }
 
 /* ── Reset & Base ── */

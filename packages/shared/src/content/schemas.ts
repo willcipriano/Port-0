@@ -10,7 +10,7 @@ export const toolSchema = z.object({
     'trace_blocker',
     'log_cleaner',
     'recon',
-    'port_opener',
+    'anti_firewall',
   ]),
   max_security_level: z.number().int().min(1).max(5),
   ram_cost: z.number().int().min(0),
@@ -37,6 +37,7 @@ export const archetypeSchema = z.object({
     alarm: z.number().int(),
     encryption: z.number().int(),
     antivirus: z.number().int(),
+    ice: z.number().int().min(0).max(5).optional(),
   }),
 });
 
@@ -74,7 +75,24 @@ export const landmarksFileSchema = z.object({
 
 export const balanceFileSchema = z.record(z.unknown());
 
+export const filesystemBalanceSchema = z.object({
+  balance_version: z.literal('balance-v0'),
+  default_rig_storage_qgb: z.number().int().min(1),
+  tool_size_qgb: z.record(z.number().int().min(1)),
+  default_tool_size_qgb: z.number().int().min(1),
+  loot_defaults: z
+    .record(
+      z.object({
+        size_qgb: z.number().int().min(0),
+        value_credits: z.number().int().min(0),
+        heat: z.enum(['cold', 'warm', 'hot', 'burned', 'collapsed']),
+      }),
+    )
+    .optional(),
+});
+
 export type ToolFileEntry = z.infer<typeof toolSchema>;
 export type ArchetypeFileEntry = z.infer<typeof archetypeSchema>;
 export type SubnetFileEntry = z.infer<typeof subnetFileSchema>;
 export type LandmarkFileEntry = z.infer<typeof landmarkSchema>;
+export type FilesystemBalanceFile = z.infer<typeof filesystemBalanceSchema>;

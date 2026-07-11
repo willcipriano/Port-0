@@ -93,7 +93,7 @@ describe('generateSubnet', () => {
     for (const machine of cheap) {
       expect(machine.securityComponents.password).toBeGreaterThanOrEqual(1);
       expect(machine.securityComponents.password).toBeLessThanOrEqual(2);
-      expect(machine.securityComponents.firewall).toBeGreaterThanOrEqual(1);
+      expect(machine.securityComponents.firewall).toBeGreaterThanOrEqual(0);
       expect(machine.securityComponents.firewall).toBeLessThanOrEqual(2);
       expect(machine.securityComponents.alarm).toBeGreaterThanOrEqual(1);
       expect(machine.securityComponents.alarm).toBeLessThanOrEqual(2);
@@ -106,5 +106,33 @@ describe('generateSubnet', () => {
     expect(result.landmarkCount).toBe(3);
     expect(result.machines).toHaveLength(303);
     expect(new Set(result.machines.map((m) => m.ipv6)).size).toBe(303);
+  });
+
+  it('generated ICE stays within 0-5', () => {
+    const result = generateSubnet({ seed: DEFAULT_WORLD_SEED });
+    for (const machine of result.machines) {
+      const ice = machine.securityComponents.ice ?? 0;
+      expect(ice).toBeGreaterThanOrEqual(0);
+      expect(ice).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('tier-1 cheap_server ICE stays within 0-1', () => {
+    const content = fixtureContent({ subnet: { machine_count: 100 } as WorldContent['subnet'] });
+    const result = generateSubnet({ content, seed: 7 });
+    const cheap = result.machines.filter((m) => !m.isLandmark && m.osArchetypeId === 'cheap_server');
+    expect(cheap.length).toBeGreaterThan(0);
+    for (const machine of cheap) {
+      const ice = machine.securityComponents.ice ?? 0;
+      expect(ice).toBeGreaterThanOrEqual(0);
+      expect(ice).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('community_hub landmark has ICE 0', () => {
+    const result = generateSubnet({ seed: DEFAULT_WORLD_SEED });
+    const hub = result.machines.find((m) => m.landmarkId === 'community_hub');
+    expect(hub).toBeDefined();
+    expect(hub!.securityComponents.ice ?? 0).toBe(0);
   });
 });

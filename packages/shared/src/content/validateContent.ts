@@ -7,6 +7,7 @@ import {
   subnetFileSchema,
   toolsFileSchema,
   balanceFileSchema,
+  filesystemBalanceSchema,
 } from './schemas.js';
 
 function contentRoot(): string {
@@ -33,6 +34,13 @@ function validateBalanceDir(root: string): string[] {
   for (const file of readdirSync(balanceDir)) {
     if (!file.endsWith('.json')) continue;
     const data = loadJsonOrYaml(join(balanceDir, file));
+    if (file === 'filesystem.json') {
+      const fsResult = filesystemBalanceSchema.safeParse(data);
+      if (!fsResult.success) {
+        errors.push(`balance/${file}: ${fsResult.error.message}`);
+      }
+      continue;
+    }
     const result = balanceFileSchema.safeParse(data);
     if (!result.success) {
       errors.push(`balance/${file}: ${result.error.message}`);

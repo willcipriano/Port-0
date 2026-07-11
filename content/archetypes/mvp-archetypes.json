@@ -11,7 +11,8 @@
         "firewall": 1,
         "alarm": 1,
         "encryption": 0,
-        "antivirus": 0
+        "antivirus": 0,
+        "ice": 0
       }
     },
     {
@@ -24,7 +25,8 @@
         "firewall": 2,
         "alarm": 2,
         "encryption": 1,
-        "antivirus": 1
+        "antivirus": 1,
+        "ice": 1
       }
     },
     {
@@ -37,7 +39,8 @@
         "firewall": 3,
         "alarm": 3,
         "encryption": 2,
-        "antivirus": 2
+        "antivirus": 2,
+        "ice": 2
       }
     },
     {
@@ -50,7 +53,8 @@
         "firewall": 4,
         "alarm": 4,
         "encryption": 3,
-        "antivirus": 3
+        "antivirus": 3,
+        "ice": 3
       }
     }
   ]

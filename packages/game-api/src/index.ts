@@ -39,6 +39,17 @@ import {
   toScanResponse,
   updateFleetRole,
   FleetError,
+  FilesystemError,
+  getTree,
+  getNode,
+  getUsage,
+  createDirectory,
+  renameNode,
+  moveNode,
+  trashNode,
+  restoreNode,
+  runToolFromPath,
+  ensureStarterTools,
 } from '@port0/db';
 import {
   ApiError,
@@ -205,8 +216,146 @@ app.get('/fleet', bearerAuthMiddleware, requireAction('fleet_mgmt'), async (c) =
 app.get('/rig', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
   const account = await findAccountById(getAccountId(c));
   if (!account) throw new ApiError(404, 'not_found', 'Account not found');
-  return c.json(toRigResponse(account));
+  const usage = await getUsage(account.id);
+  return c.json(toRigResponse(account, usage));
 });
+
+function mapFilesystemError(err: FilesystemError): ApiError {
+  const status =
+    err.code === 'not_found'
+      ? 404
+      : err.code === 'storage_full'
+        ? 409
+        : err.code === 'protected' || err.code === 'exists' || err.code === 'invalid_move'
+          ? 400
+          : 400;
+  return new ApiError(status, err.code, err.message);
+}
+
+app.get('/filesystem', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const accountId = getAccountId(c);
+  await ensureStarterTools(accountId);
+  const tree = await getTree(accountId);
+  return c.json(tree);
+});
+
+app.get('/filesystem/node', bearerAuthMiddleware, requireAction('read_only'), async (c) => {
+  const path = c.req.query('path');
+  if (!path) throw new ApiError(400, 'invalid_path', 'Query param path is required');
+  try {
+    const node = await getNode(getAccountId(c), path);
+    return c.json({ node });
+  } catch (err) {
+    if (err instanceof FilesystemError) throw mapFilesystemError(err);
+    throw err;
+  }
+});
+
+const fsPathSchema = z.object({ path: z.string().min(1) });
+const fsMoveSchema = z.object({ from: z.string().min(1), to: z.string().min(1) });
+const fsRenameSchema = z.object({ path: z.string().min(1), name: z.string().min(1) });
+
+app.post(
+  '/filesystem/mkdir',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsPathSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const node = await createDirectory(getAccountId(c), body.path);
+      return c.json({ node }, 201);
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
+
+app.post(
+  '/filesystem/move',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsMoveSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const node = await moveNode(getAccountId(c), body.from, body.to);
+      return c.json({ node });
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
+
+app.post(
+  '/filesystem/rename',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsRenameSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const node = await renameNode(getAccountId(c), body.path, body.name);
+      return c.json({ node });
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
+
+app.post(
+  '/filesystem/trash',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsPathSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const node = await trashNode(getAccountId(c), body.path);
+      return c.json({ node });
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
+
+app.post(
+  '/filesystem/restore',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsPathSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const node = await restoreNode(getAccountId(c), body.path);
+      return c.json({ node });
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
+
+app.post(
+  '/filesystem/run',
+  bearerAuthMiddleware,
+  requireAction('read_only'),
+  zValidator('json', fsPathSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const result = await runToolFromPath(getAccountId(c), body.path);
+      return c.json({ toolId: result.toolId, node: result.node });
+    } catch (err) {
+      if (err instanceof FilesystemError) throw mapFilesystemError(err);
+      throw err;
+    }
+  },
+);
 
 const fleetRoleSchema = z.object({
   role: z.enum(['staging', 'passive_income', 'defensive', 'owner']),

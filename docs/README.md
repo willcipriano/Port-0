@@ -6,6 +6,7 @@
 | [`../plan/`](../plan/) | Implementation stages |
 | [`ideas/`](ideas/) | Post-MVP expansion ideas (brainstorm; not build scope) |
 | [`local-development.md`](local-development.md) | OAuth, dev auth, hack sessions, integration tests |
+| [`AI_PROJECT_BRIEF.md`](AI_PROJECT_BRIEF.md) | Self-contained project overview for AI assistants without repo access |
 
 ## Expansion ideas
 

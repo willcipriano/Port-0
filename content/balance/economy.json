@@ -11,7 +11,7 @@
     "scanner_l1": 50,
     "cracker_l1": 75,
     "trace_blocker_l1": 100,
-    "port_opener_l1": 80,
+    "anti_firewall_l1": 150,
     "recon_l1": 120,
     "log_cleaner_l1": 90
   }

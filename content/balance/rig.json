@@ -2,6 +2,6 @@
   "balance_version": "balance-v0",
   "cpu": 4,
   "ram": 8,
-  "storage": 100,
+  "storage": 1000,
   "bandwidth": 1
 }

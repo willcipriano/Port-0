@@ -252,6 +252,186 @@ paths:
         '404':
           description: Entry not found
 
+  /filesystem:
+    get:
+      tags: [Fleet]
+      summary: List the authenticated account's local rig filesystem
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Filesystem tree with QGB usage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FsTreeResponse'
+
+  /filesystem/node:
+    get:
+      tags: [Fleet]
+      summary: Get a single filesystem node by path
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+            example: /bin/cracker_l1.v1
+      responses:
+        '200':
+          description: Node detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  node:
+                    $ref: '#/components/schemas/FsNode'
+        '404':
+          description: Not found
+
+  /filesystem/mkdir:
+    post:
+      tags: [Fleet]
+      summary: Create a directory on the local rig
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        '201':
+          description: Directory created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  node:
+                    $ref: '#/components/schemas/FsNode'
+
+  /filesystem/move:
+    post:
+      tags: [Fleet]
+      summary: Move a filesystem node
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+      responses:
+        '200':
+          description: Node moved
+
+  /filesystem/rename:
+    post:
+      tags: [Fleet]
+      summary: Rename a filesystem node
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, name]
+              properties:
+                path:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Node renamed
+
+  /filesystem/trash:
+    post:
+      tags: [Fleet]
+      summary: Move a node into /trash
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        '200':
+          description: Node trashed
+
+  /filesystem/restore:
+    post:
+      tags: [Fleet]
+      summary: Restore a node from /trash
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        '200':
+          description: Node restored
+
+  /filesystem/run:
+    post:
+      tags: [Fleet]
+      summary: Resolve a tool file path to a runnable toolId
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        '200':
+          description: Tool id for client launch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  toolId:
+                    type: string
+                  node:
+                    $ref: '#/components/schemas/FsNode'
+
   /machines/{ipv6}/harden:
     post:
       tags: [Fleet]
@@ -418,8 +598,85 @@ components:
           type: integer
         storage:
           type: integer
+          description: Rig storage capacity in QGB
         bandwidth:
           type: integer
+        usedQgb:
+          type: integer
+        capacityQgb:
+          type: integer
+
+    FsNode:
+      type: object
+      required: [id, name, path, nodeType, category, sizeQgb, valueCredits, heat, status, protected, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        path:
+          type: string
+        nodeType:
+          type: string
+          enum: [directory, file]
+        category:
+          type: string
+          enum: [tool, loot, qrypted, credential, intel, contract, log, module, archive, trash]
+        sizeQgb:
+          type: integer
+        valueCredits:
+          type: integer
+        heat:
+          type: string
+          enum: [cold, warm, hot, burned, collapsed]
+        status:
+          type: string
+        toolId:
+          type: string
+          nullable: true
+        originIpv6:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        protected:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    FsTreeResponse:
+      type: object
+      required: [nodes, usedQgb, capacityQgb, breakdown]
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FsNode'
+        usedQgb:
+          type: integer
+        capacityQgb:
+          type: integer
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              sizeQgb:
+                type: integer
+              count:
+                type: integer
 
     Account:
       type: object

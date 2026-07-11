@@ -11,6 +11,11 @@
       "import": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./world/passwordLevelLabel": {
+      "types": "./src/world/passwordLevelLabel.ts",
+      "import": "./src/world/passwordLevelLabel.ts",
+      "default": "./dist/world/passwordLevelLabel.js"
+    },
     "./openapi.yaml": "./openapi.yaml"
   },
   "scripts": {

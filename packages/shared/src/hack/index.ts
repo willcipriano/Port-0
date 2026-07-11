@@ -9,3 +9,6 @@ export * from './sessionEngine.js';
 export * from './siege.js';
 export * from './recon.js';
 export * from './traceProbe.js';
+export * from './ice.js';
+export * from './fsPaths.js';
+export * from './fsCapacity.js';

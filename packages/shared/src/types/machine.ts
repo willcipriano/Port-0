@@ -10,6 +10,8 @@ export interface SecurityComponents {
   alarm: number;
   encryption: number;
   antivirus: number;
+  /** Active intrusion countermeasures (0 = none). Defaults to 0 when missing. */
+  ice?: number;
 }
 
 export interface MachineResources {

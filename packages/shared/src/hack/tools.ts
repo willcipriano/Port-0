@@ -39,6 +39,19 @@ export function computeToolDurationMs(tool: Tool, targetLevel: number): number {
   return Math.max(1000, tool.durationSeconds * levelFactor * 1_000);
 }
 
+/** Time multiplier from firewall level: level -1 = 0%, level 0 = +10%, level N = +(N+1)*10%. */
+export function firewallPenaltyMultiplier(effectiveLevel: number): number {
+  return 1 + (effectiveLevel + 1) * 0.10;
+}
+
+export function getEffectiveFirewallLevel(session: HackSessionState): number {
+  const raw = session.target.securityComponents.firewall;
+  const dampenerActive = session.runningTools.some(
+    (run) => run.category === 'anti_firewall' && !run.cancelled && run.warmedUp,
+  );
+  return dampenerActive ? raw - 1 : raw;
+}
+
 export function computeResourceUsage(
   session: HackSessionState,
 ): { cpuUsed: number; ramUsed: number } {
@@ -76,7 +89,11 @@ export function advanceRunningTools(session: HackSessionState, deltaMs: number, 
     const share = run.cpuCost / Math.max(1, totalCpu);
     run.progressMs = Math.min(run.durationMs, run.progressMs + deltaMs * share);
     if (run.progressMs >= run.durationMs) {
-      run.completed = true;
+      if (run.category === 'anti_firewall') {
+        run.warmedUp = true;
+      } else {
+        run.completed = true;
+      }
     }
   }
 }
@@ -97,9 +114,8 @@ export function applyToolEffect(
         session.shellAccessLevel = 'user';
       }
       return { output: `Password cracked: ${session.target.rootPassword} — Access upgraded to ${session.shellAccessLevel}.` };
-    case 'port_opener':
-      session.firewallOpened = true;
-      return { output: 'Firewall bypassed. Remote services reachable.' };
+    case 'anti_firewall':
+      return { output: 'Firewall dampener online — effective firewall reduced by 1 while active.' };
     case 'trace_blocker':
       return { output: 'Trace countermeasure deployed. Trace deadline extended.' };
     case 'recon':
@@ -120,8 +136,7 @@ export function updateAccessLifecycle(session: HackSessionState): void {
   const hasAccess =
     session.shellAccessLevel === 'root' ||
     session.shellAccessLevel === 'user' ||
-    session.passwordCracked ||
-    session.firewallOpened;
+    session.passwordCracked;
 
   if (hasAccess && session.lifecycle !== 'secured' && session.lifecycle !== 'claimed') {
     session.lifecycle = session.alarmDisabled ? 'secured' : 'access_gained';

@@ -19,5 +19,5 @@
     "escalation_multiplier": 1.5,
     "confiscate_illegal_on_prison": true
   },
-  "illegal_tool_categories": ["cracker", "port_opener", "trace_blocker", "log_cleaner"]
+  "illegal_tool_categories": ["cracker", "anti_firewall", "trace_blocker", "log_cleaner"]
 }

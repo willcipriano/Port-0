@@ -60,7 +60,7 @@ export function loadTraceBalance(root = worldContentRoot()): TraceBalance {
     },
     illegalToolCategories: (raw.illegal_tool_categories as ToolCategory[]) ?? [
       'cracker',
-      'port_opener',
+      'anti_firewall',
       'trace_blocker',
       'log_cleaner',
     ],
@@ -126,6 +126,36 @@ export function loadVirusBalance(root = worldContentRoot()) {
     craftMinutes: Number(raw.craft_minutes ?? 30),
     uses: Number(raw.uses ?? 3),
     sourceCodeCraftTimeMultiplier: Number(raw.source_code_craft_time_multiplier ?? 0.5),
+  };
+}
+
+export interface FilesystemBalance {
+  defaultRigStorageQgb: number;
+  toolSizeQgb: Record<string, number>;
+  defaultToolSizeQgb: number;
+  lootDefaults: Record<
+    string,
+    { sizeQgb: number; valueCredits: number; heat: string }
+  >;
+}
+
+export function loadFilesystemBalance(root = worldContentRoot()): FilesystemBalance {
+  const raw = loadJson(resolve(root, 'balance/filesystem.json')) as Record<string, unknown>;
+  const toolSizeRaw = (raw.tool_size_qgb as Record<string, number>) ?? {};
+  const lootRaw = (raw.loot_defaults as Record<string, Record<string, unknown>>) ?? {};
+  const lootDefaults: FilesystemBalance['lootDefaults'] = {};
+  for (const [key, value] of Object.entries(lootRaw)) {
+    lootDefaults[key] = {
+      sizeQgb: Number(value.size_qgb ?? 40),
+      valueCredits: Number(value.value_credits ?? 25),
+      heat: String(value.heat ?? 'warm'),
+    };
+  }
+  return {
+    defaultRigStorageQgb: Number(raw.default_rig_storage_qgb ?? 1000),
+    toolSizeQgb: toolSizeRaw,
+    defaultToolSizeQgb: Number(raw.default_tool_size_qgb ?? 10),
+    lootDefaults,
   };
 }
 

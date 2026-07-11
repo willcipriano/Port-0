@@ -11,7 +11,9 @@ import { Terminal } from './windows/Terminal';
 import { EmailContracts } from './windows/EmailContracts';
 import { PasswordVault } from './windows/PasswordVault';
 import { Hardware } from './windows/Hardware';
+import { Filesystem } from './windows/Filesystem';
 import { BruteForceTool } from './windows/tools/BruteForceTool';
+import { AntiFirewallTool } from './windows/tools/AntiFirewallTool';
 import { TOOL_REGISTRY, type ToolRegistryKey } from '../tools/registry';
 import type { Account } from '../hooks/useAuth';
 
@@ -67,6 +69,32 @@ export function AppShell({ account, onLogout }: Props) {
     }
   }, [wm]);
 
+  const handleLaunchTool = useCallback((key: ToolRegistryKey) => {
+    const def = TOOL_REGISTRY[key];
+    const existing = wm.windows.find(w => w.toolId === def.toolId && !w.closed);
+    if (existing) {
+      wm.open(existing.id);
+      wm.focus(existing.id);
+      return;
+    }
+    const id = wm.spawnToolWindow({
+      title: def.windowTitle,
+      component: def.component,
+      toolId: def.toolId,
+    });
+    wm.focus(id);
+  }, [wm]);
+
+  const handleLaunchToolById = useCallback((toolId: string) => {
+    const entry = Object.entries(TOOL_REGISTRY).find(([, def]) => def.toolId === toolId);
+    if (entry) {
+      handleLaunchTool(entry[0] as ToolRegistryKey);
+      return;
+    }
+    wm.open('hardware');
+    wm.focus('hardware');
+  }, [handleLaunchTool, wm]);
+
   const renderWindow = useCallback((win: WinState) => {
     switch (win.component) {
       case 'WorldMap':
@@ -100,6 +128,13 @@ export function AppShell({ account, onLogout }: Props) {
             connectedIpv6={session.connectedIpv6}
           />
         );
+      case 'Filesystem':
+        return (
+          <Filesystem
+            accountId={account.id}
+            onLaunchTool={handleLaunchToolById}
+          />
+        );
       case 'BruteForceTool':
         return (
           <BruteForceTool
@@ -109,25 +144,18 @@ export function AppShell({ account, onLogout }: Props) {
             onRunLinked={(runId) => wm.update(win.id, { runId: runId || undefined })}
           />
         );
+      case 'AntiFirewallTool':
+        return (
+          <AntiFirewallTool
+            session={session}
+            toolId={win.toolId ?? 'anti_firewall_l1'}
+            runId={win.runId}
+            onRunLinked={(runId) => wm.update(win.id, { runId: runId || undefined })}
+          />
+        );
       default:      return null;
     }
-  }, [account, session, wm.update, focusToolWindow]);
-
-  const handleLaunchTool = useCallback((key: ToolRegistryKey) => {
-    const def = TOOL_REGISTRY[key];
-    const existing = wm.windows.find(w => w.toolId === def.toolId && !w.closed);
-    if (existing) {
-      wm.open(existing.id);
-      wm.focus(existing.id);
-      return;
-    }
-    const id = wm.spawnToolWindow({
-      title: def.windowTitle,
-      component: def.component,
-      toolId: def.toolId,
-    });
-    wm.focus(id);
-  }, [wm]);
+  }, [account, session, wm.update, focusToolWindow, handleLaunchToolById]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>

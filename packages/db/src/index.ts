@@ -31,6 +31,25 @@ export {
   installTool,
 } from './rigTools.js';
 export {
+  FilesystemError,
+  ensureDefaultTree,
+  getTree,
+  getNode,
+  getUsage,
+  getTypeBreakdown,
+  createDirectory,
+  createFile,
+  renameNode,
+  moveNode,
+  trashNode,
+  restoreNode,
+  runToolFromPath,
+  listInstalledToolIdsFromFs,
+  backfillToolsFromRigTools,
+  normalizeFsPath,
+  toolPath,
+} from './userFilesystem.js';
+export {
   saveHackSession,
   loadHackSession,
   deleteHackSession,

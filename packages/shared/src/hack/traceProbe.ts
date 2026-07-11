@@ -4,7 +4,7 @@ import { factionMultiplier, heatMultiplier } from './trace.js';
 
 const PROBE_CATEGORIES = new Set([
   'cracker',
-  'port_opener',
+  'anti_firewall',
   'recon',
   'log_cleaner',
   'exploit',
